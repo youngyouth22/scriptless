@@ -1,0 +1,79 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# PowerSync Sync Rules v3 — Scriptless / Shipaton 2026
+# Format: Streams (edition 3)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+config:
+  edition: 3
+
+streams:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # GLOBAL CONTENT
+  # Download-only data shared across all users (scenarios, achievements, tips).
+  # These tables are read-only on the client and never modified by the app.
+  # ─────────────────────────────────────────────────────────────────────────────
+  global_content:
+    auto_subscribe: true
+    queries:
+      - SELECT * FROM scenario_categories WHERE is_active = true
+      - SELECT * FROM scenarios WHERE is_predefined = true AND is_active = true
+      - SELECT * FROM achievements
+      - SELECT * FROM daily_tips WHERE is_active = true
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # USER DATA
+  # All user-scoped tables that filter directly on auth.user_id().
+  # Grouped into a single stream to minimize sync connection overhead.
+  # Each SELECT still targets its own table — PowerSync routes rows correctly.
+  # ─────────────────────────────────────────────────────────────────────────────
+  user_data:
+    auto_subscribe: true
+    queries:
+      # User profile (PK matches auth user id)
+      - SELECT * FROM profiles WHERE id = auth.user_id()
+
+      # Custom interlocutor personalities (Pro feature)
+      - SELECT * FROM custom_personalities WHERE user_id = auth.user_id()
+
+      # Scenario customizations (favorites, notes, overrides)
+      - SELECT * FROM user_scenario_customizations WHERE user_id = auth.user_id()
+
+      # Conversation sessions
+      - SELECT * FROM conversations WHERE user_id = auth.user_id()
+
+      # AI-generated feedback reports
+      # Note: INSERT/UPDATE locked to service_role in RLS; client is download-only
+      - SELECT * FROM feedbacks WHERE user_id = auth.user_id()
+
+      # Skill progression history
+      # Note: INSERT locked to service_role in RLS; client is download-only
+      - SELECT * FROM user_progress WHERE user_id = auth.user_id()
+
+      # Unlocked achievements
+      # Note: INSERT locked to service_role in RLS; client is download-only
+      - SELECT * FROM user_achievements WHERE user_id = auth.user_id()
+
+      # RevenueCat subscription state
+      # Note: Managed by backend webhooks; client is download-only
+      - SELECT * FROM subscriptions WHERE user_id = auth.user_id()
+
+      # In-app notifications
+      - SELECT * FROM notifications WHERE user_id = auth.user_id()
+
+      # Activity logs (streaks, stats triggers)
+      - SELECT * FROM user_activity_logs WHERE user_id = auth.user_id()
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # USER MESSAGES
+  # Isolated in its own stream because it requires an INNER JOIN to enforce
+  # row-level access through the parent conversation.
+  # Keeping JOINs separate prevents the grouped stream from mixing flat filters
+  # with relational lookups, which is the documented v3 best practice.
+  # ─────────────────────────────────────────────────────────────────────────────
+  user_messages:
+    auto_subscribe: true
+    query: |
+      SELECT conversation_messages.*
+      FROM conversation_messages
+      INNER JOIN conversations ON conversations.id = conversation_messages.conversation_id
+      WHERE conversations.user_id = auth.user_id()

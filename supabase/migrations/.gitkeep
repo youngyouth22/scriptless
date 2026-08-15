@@ -1,0 +1,2 @@
+# Place your Supabase migration SQL files in this folder.
+# Filenames should follow the pattern: <timestamp>_<name>.sql (e.g., 20260815000000_init_schema.sql)

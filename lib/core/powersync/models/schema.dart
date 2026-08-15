@@ -1,0 +1,381 @@
+import 'package:powersync/powersync.dart';
+
+const schema = Schema([
+  // ═════════════════════════════════════════════════════════════════════════
+  // GLOBAL
+  // ═════════════════════════════════════════════════════════════════════════
+  Table(
+    'scenario_categories',
+    [
+      Column.text('slug'),
+      Column.text('name'),
+      Column.text('name_fr'),
+      Column.text('description'),
+      Column.text('description_fr'),
+      Column.text('icon_name'),
+      Column.integer('sort_order'),
+      Column.integer('is_active'),
+      Column.text('created_at'),
+    ],
+    indexes: [
+      Index('idx_sc_slug', [IndexedColumn('slug')]),
+    ],
+  ),
+
+  Table(
+    'scenarios',
+    [
+      Column.text('category_id'),
+      Column.text('slug'),
+      Column.text('title'),
+      Column.text('title_fr'),
+      Column.text('description'),
+      Column.text('description_fr'),
+      Column.text('context'),
+      Column.text('context_fr'),
+      Column.text('user_goal'),
+      Column.text('user_goal_fr'),
+      Column.text('interlocutor_name'),
+      Column.text('interlocutor_role'),
+      Column.text('interlocutor_personality'),
+      Column.text('interlocutor_traits'),
+      Column.text('difficulty'),
+      Column.integer('estimated_duration_minutes'),
+      Column.text('skills_practiced'),
+      Column.text('thumbnail_url'),
+      Column.text('illustration_url'),
+      Column.text('example_audio_url'),
+      Column.integer('points_reward'),
+      Column.integer('is_predefined'),
+      Column.text('created_by'),
+      Column.integer('is_public'),
+      Column.integer('is_active'),
+      Column.integer('completion_count'),
+      Column.real('average_score'),
+      Column.text('created_at'),
+      Column.text('updated_at'),
+    ],
+    indexes: [
+      Index('idx_sc_category', [IndexedColumn('category_id')]),
+      Index('idx_sc_slug', [IndexedColumn('slug')]),
+      Index('idx_sc_difficulty', [IndexedColumn('difficulty')]),
+      Index('idx_sc_predefined', [IndexedColumn('is_predefined')]),
+    ],
+  ),
+
+  Table(
+    'achievements',
+    [
+      Column.text('slug'),
+      Column.text('name'),
+      Column.text('name_fr'),
+      Column.text('description'),
+      Column.text('description_fr'),
+      Column.text('icon_url'),
+      Column.text('icon_name'),
+      Column.text('color_hex'),
+      Column.text('unlock_condition'),
+      Column.integer('unlock_threshold'),
+      Column.integer('points'),
+      Column.integer('is_hidden'),
+      Column.text('created_at'),
+    ],
+    indexes: [
+      Index('idx_ach_slug', [IndexedColumn('slug')]),
+    ],
+  ),
+
+  Table('daily_tips', [
+    Column.text('content'),
+    Column.text('content_fr'),
+    Column.text('category'),
+    Column.text('author'),
+    Column.text('active_from'),
+    Column.text('active_until'),
+    Column.integer('sort_order'),
+    Column.integer('is_active'),
+    Column.text('created_at'),
+  ]),
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // USER
+  // ═════════════════════════════════════════════════════════════════════════
+  Table('profiles', [
+    Column.text('first_name'),
+    Column.text('last_name'),
+    Column.text('avatar_url'),
+    Column.text('role'),
+    Column.text('industry'),
+    Column.integer('confidence_level'),
+    Column.text('objectives'),
+    Column.text('preferred_language'),
+    Column.text('daily_reminder_time'),
+    Column.integer('push_notifications_enabled'),
+    Column.integer('email_notifications_enabled'),
+    Column.integer('ia_volume'),
+    Column.real('ia_speech_rate'),
+    Column.integer('push_to_talk_enabled'),
+    Column.integer('text_size_level'),
+    Column.integer('reduce_animations'),
+    Column.integer('always_show_transcription'),
+    Column.integer('current_streak'),
+    Column.integer('longest_streak'),
+    Column.integer('total_conversations'),
+    Column.integer('total_training_minutes'),
+    Column.real('overall_score'),
+    Column.text('level'),
+    Column.integer('onboarding_completed'),
+    Column.text('trial_start_date'),
+    Column.text('subscription_tier'),
+    Column.text('created_at'),
+    Column.text('updated_at'),
+  ]),
+
+  Table(
+    'custom_personalities',
+    [
+      Column.text('user_id'),
+      Column.text('name'),
+      Column.text('role'),
+      Column.text('base_type'),
+      Column.text('traits'),
+      Column.text('communication_style'),
+      Column.text('triggers'),
+      Column.text('weaknesses'),
+      Column.text('goals'),
+      Column.text('background'),
+      Column.text('voice_tone'),
+      Column.integer('is_favorite'),
+      Column.integer('usage_count'),
+      Column.text('created_at'),
+      Column.text('updated_at'),
+    ],
+    indexes: [
+      Index('idx_cp_user', [IndexedColumn('user_id')]),
+      Index('idx_cp_user_fav', [
+        IndexedColumn('user_id'),
+        IndexedColumn('is_favorite'),
+      ]),
+    ],
+  ),
+
+  Table(
+    'user_scenario_customizations',
+    [
+      Column.text('user_id'),
+      Column.text('scenario_id'),
+      Column.text('custom_interlocutor_name'),
+      Column.text('custom_relationship'),
+      Column.text('custom_context'),
+      Column.integer('is_favorite'),
+      Column.text('notes'),
+      Column.text('created_at'),
+      Column.text('updated_at'),
+    ],
+    indexes: [
+      Index('idx_usc_user', [IndexedColumn('user_id')]),
+      Index('idx_usc_scenario', [IndexedColumn('scenario_id')]),
+    ],
+  ),
+
+  Table(
+    'conversations',
+    [
+      Column.text('user_id'),
+      Column.text('scenario_id'),
+      Column.text('customization_id'),
+      Column.text('custom_personality_id'),
+      Column.text('livekit_room_name'),
+      Column.text('status'),
+      Column.text('started_at'),
+      Column.text('ended_at'),
+      Column.integer('duration_seconds'),
+      Column.text('mode'),
+      Column.integer('is_aborted'),
+      Column.text('abort_reason'),
+      Column.text('device_info'),
+      Column.text('network_quality'),
+      Column.text('created_at'),
+      Column.text('updated_at'),
+    ],
+    indexes: [
+      Index('idx_conv_user', [IndexedColumn('user_id')]),
+      Index('idx_conv_scenario', [IndexedColumn('scenario_id')]),
+      Index('idx_conv_status', [IndexedColumn('status')]),
+      Index('idx_conv_user_status', [
+        IndexedColumn('user_id'),
+        IndexedColumn('status'),
+      ]),
+      Index('idx_conv_dates', [
+        IndexedColumn('user_id'),
+        IndexedColumn('started_at'),
+      ]),
+    ],
+  ),
+
+  Table(
+    'conversation_messages',
+    [
+      Column.text('conversation_id'),
+      Column.text('speaker'),
+      Column.text('content'),
+      Column.real('timestamp_seconds'),
+      Column.text('audio_url'),
+      Column.integer('audio_duration_ms'),
+      Column.real('sentiment_score'),
+      Column.text('tone_tags'),
+      Column.integer('sequence_number'),
+      Column.text('created_at'),
+    ],
+    indexes: [
+      Index('idx_msg_conv', [IndexedColumn('conversation_id')]),
+      Index('idx_msg_seq', [
+        IndexedColumn('conversation_id'),
+        IndexedColumn('sequence_number'),
+      ]),
+      Index('idx_msg_ts', [
+        IndexedColumn('conversation_id'),
+        IndexedColumn('timestamp_seconds'),
+      ]),
+    ],
+  ),
+
+  Table(
+    'feedbacks',
+    [
+      Column.text('conversation_id'),
+      Column.text('user_id'),
+      Column.real('clarity_score'),
+      Column.real('assertiveness_score'),
+      Column.real('empathy_score'),
+      Column.real('structure_score'),
+      Column.real('confidence_score'),
+      Column.real('overall_score'),
+      Column.text('summary'),
+      Column.text('summary_fr'),
+      Column.text('strengths'),
+      Column.text('improvements'),
+      Column.text('key_moments'),
+      Column.text('confidence_boost'),
+      Column.text('confidence_boost_fr'),
+      Column.text('detected_skills'),
+      Column.text('missed_opportunities'),
+      Column.real('previous_attempt_score'),
+      Column.real('improvement_delta'),
+      Column.integer('is_read'),
+      Column.text('generated_at'),
+      Column.text('created_at'),
+    ],
+    indexes: [
+      Index('idx_fb_user', [IndexedColumn('user_id')]),
+      Index('idx_fb_conv', [IndexedColumn('conversation_id')]),
+      Index('idx_fb_user_read', [
+        IndexedColumn('user_id'),
+        IndexedColumn('is_read'),
+      ]),
+    ],
+  ),
+
+  Table(
+    'user_progress',
+    [
+      Column.text('user_id'),
+      Column.text('skill_name'),
+      Column.real('score'),
+      Column.text('conversation_id'),
+      Column.text('recorded_at'),
+    ],
+    indexes: [
+      Index('idx_prog_user_skill', [
+        IndexedColumn('user_id'),
+        IndexedColumn('skill_name'),
+      ]),
+      Index('idx_prog_user_date', [
+        IndexedColumn('user_id'),
+        IndexedColumn('recorded_at'),
+      ]),
+    ],
+  ),
+
+  Table(
+    'user_achievements',
+    [
+      Column.text('user_id'),
+      Column.text('achievement_id'),
+      Column.text('unlocked_at'),
+      Column.integer('is_new'),
+    ],
+    indexes: [
+      Index('idx_ua_user', [IndexedColumn('user_id')]),
+      Index('idx_ua_new', [IndexedColumn('user_id'), IndexedColumn('is_new')]),
+    ],
+  ),
+
+  Table(
+    'subscriptions',
+    [
+      Column.text('user_id'),
+      Column.text('revenuecat_app_user_id'),
+      Column.text('revenuecat_original_transaction_id'),
+      Column.text('tier'),
+      Column.text('status'),
+      Column.text('started_at'),
+      Column.text('expires_at'),
+      Column.text('trial_ends_at'),
+      Column.text('cancelled_at'),
+      Column.text('store'),
+      Column.text('product_id'),
+      Column.integer('will_renew'),
+      Column.integer('is_in_grace_period'),
+      Column.text('raw_revenuecat_data'),
+      Column.text('created_at'),
+      Column.text('updated_at'),
+    ],
+    indexes: [
+      Index('idx_sub_user', [IndexedColumn('user_id')]),
+      Index('idx_sub_status', [IndexedColumn('status')]),
+    ],
+  ),
+
+  Table(
+    'notifications',
+    [
+      Column.text('user_id'),
+      Column.text('type'),
+      Column.text('title'),
+      Column.text('body'),
+      Column.text('action_route'),
+      Column.text('action_params'),
+      Column.integer('is_read'),
+      Column.integer('is_pushed'),
+      Column.text('scheduled_at'),
+      Column.text('sent_at'),
+      Column.text('created_at'),
+    ],
+    indexes: [
+      Index('idx_notif_user', [IndexedColumn('user_id')]),
+      Index('idx_notif_user_read', [
+        IndexedColumn('user_id'),
+        IndexedColumn('is_read'),
+      ]),
+    ],
+  ),
+
+  Table(
+    'user_activity_logs',
+    [
+      Column.text('user_id'),
+      Column.text('activity_type'),
+      Column.text('activity_date'),
+      Column.text('metadata'),
+      Column.text('created_at'),
+    ],
+    indexes: [
+      Index('idx_act_user_date', [
+        IndexedColumn('user_id'),
+        IndexedColumn('activity_date'),
+      ]),
+      Index('idx_act_type', [IndexedColumn('activity_type')]),
+    ],
+  ),
+]);

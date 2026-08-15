@@ -1,0 +1,24 @@
+flavors:
+  dev:
+    app:
+      name: "Scriptless Dev"
+    android:
+      applicationId: "com.ootaris.scriptless.dev"
+    ios:
+      bundleId: "com.ootaris.scriptless.dev"
+
+  staging:
+    app:
+      name: "Scriptless Staging"
+    android:
+      applicationId: "com.ootaris.scriptless.staging"
+    ios:
+      bundleId: "com.ootaris.scriptless.staging"
+
+  prod:
+    app:
+      name: "Scriptless"
+    android:
+      applicationId: "com.ootaris.scriptless"
+    ios:
+      bundleId: "com.ootaris.scriptless"
