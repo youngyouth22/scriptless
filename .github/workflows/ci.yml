@@ -1,0 +1,233 @@
+name: Scriptless CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+      - develop
+  pull_request:
+    branches:
+      - main
+      - staging
+      - develop
+    types: [opened, synchronize, reopened, ready_for_review]
+
+# Cancel previous runs for the same branch/PR when new commits are pushed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: '3.38.1'
+  JAVA_VERSION: '17'
+
+jobs:
+  # ============================================================================
+  # 1. CONVENTIONAL COMMITS & PR METADATA VALIDATION
+  # ============================================================================
+  pr-lint:
+    name: Validate PR Title & Commits
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Validate PR Title Convention
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+          requireScope: false
+
+  # ============================================================================
+  # 2. CODE FORMATTING & STATIC ANALYSIS
+  # ============================================================================
+  analyze:
+    name: Lint & Static Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+          cache-key: "flutter-:os:-:channel:-:version:-:arch:-:hash:"
+          cache-path: "${{ runner.tool_cache }}/flutter/:channel:-:version:-:arch:"
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Verify Code Formatting
+        run: dart format --output=none --set-exit-if-changed lib/ test/
+
+      - name: Run Static Analysis (Zero Warnings Policy)
+        run: flutter analyze --fatal-infos --fatal-warnings
+
+  # ============================================================================
+  # 3. UNIT & BLOC TESTS WITH STRICT COVERAGE GATES
+  # ============================================================================
+  test:
+    name: Tests & Coverage Gate
+    runs-on: ubuntu-latest
+    needs: analyze
+    timeout-minutes: 20
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Install LCOV
+        run: sudo apt-get update && sudo apt-get install -y lcov bc
+
+      - name: Setup CI Environment Files
+        run: |
+          cp .env.example .env
+          cp .env.example .env.dev
+          cp .env.example .env.staging
+          cp .env.example .env.prod
+
+      - name: Run Tests with Coverage
+        run: flutter test --coverage
+
+      - name: Enforce Coverage Quality Gate
+        run: |
+          chmod +x scripts/check_coverage.sh
+          ./scripts/check_coverage.sh
+
+      - name: Generate Code Coverage Summary
+        if: always()
+        run: |
+          if [ -f "coverage/lcov.info" ]; then
+            echo "### 📊 Code Coverage Report" >> $GITHUB_STEP_SUMMARY
+            lcov --summary coverage/lcov.info >> $GITHUB_STEP_SUMMARY 2>&1 || true
+          fi
+
+      - name: Upload Coverage Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-coverage-report
+          path: coverage/
+          retention-days: 14
+
+  # ============================================================================
+  # 4. ANDROID BUILD VALIDATION MATRIX
+  # ============================================================================
+  build-android:
+    name: Build Android (${{ matrix.flavor }})
+    runs-on: ubuntu-latest
+    needs: test
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        flavor: [dev, staging, prod]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'gradle'
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Setup CI Environment Files
+        run: |
+          cp .env.example .env
+          cp .env.example .env.dev
+          cp .env.example .env.staging
+          cp .env.example .env.prod
+
+      - name: Build Android APK (${{ matrix.flavor }})
+        run: |
+          flutter build apk \
+            --flavor ${{ matrix.flavor }} \
+            --dart-define=appFlavor=${{ matrix.flavor }}
+
+      - name: Upload Build Artifact (${{ matrix.flavor }})
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-${{ matrix.flavor }}-apk
+          path: build/app/outputs/flutter-apk/*.apk
+          retention-days: 7
+
+  # ============================================================================
+  # 5. IOS BUILD VALIDATION
+  # ============================================================================
+  build-ios:
+    name: Build iOS (dev smoke test)
+    runs-on: macos-14
+    needs: test
+    timeout-minutes: 30
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Setup CI Environment Files
+        run: |
+          cp .env.example .env
+          cp .env.example .env.dev
+          cp .env.example .env.staging
+          cp .env.example .env.prod
+
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: ios/Pods
+          key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
+
+      - name: Build iOS No-Codesign (dev)
+        run: |
+          flutter build ios \
+            --flavor dev \
+            --no-codesign \
+            --dart-define=appFlavor=dev

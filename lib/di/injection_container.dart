@@ -12,6 +12,18 @@ import 'package:scriptless/features/auth/domain/usecases/sign_in_with_linkedin_u
 import 'package:scriptless/features/auth/domain/usecases/sign_in_with_twitter_usecase.dart';
 import 'package:scriptless/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:scriptless/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:scriptless/features/subscription/data/datasources/revenuecat_remote_datasource.dart';
+import 'package:scriptless/features/subscription/data/repositories/subscription_repository_impl.dart';
+import 'package:scriptless/features/subscription/domain/repositories/subscription_repository.dart';
+import 'package:scriptless/features/subscription/domain/usecases/check_pro_entitlement_usecase.dart';
+import 'package:scriptless/features/subscription/domain/usecases/get_offerings_usecase.dart';
+import 'package:scriptless/features/subscription/domain/usecases/present_customer_center_usecase.dart';
+import 'package:scriptless/features/subscription/domain/usecases/present_paywall_usecase.dart';
+import 'package:scriptless/features/subscription/domain/usecases/purchase_subscription_usecase.dart';
+import 'package:scriptless/features/subscription/domain/usecases/restore_purchases_usecase.dart';
+import 'package:scriptless/features/subscription/domain/usecases/sync_subscription_auth_usecase.dart';
+import 'package:scriptless/features/subscription/domain/usecases/watch_subscription_status_usecase.dart';
+import 'package:scriptless/features/subscription/presentation/bloc/subscription_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Global service locator.
@@ -45,9 +57,13 @@ void _registerExternal() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 void _registerDataSources() {
-  sl.registerLazySingleton<AuthRemoteDataSource>(
-    () => AuthRemoteDataSourceImpl(sl<SupabaseClient>()),
-  );
+  sl
+    ..registerLazySingleton<AuthRemoteDataSource>(
+      () => AuthRemoteDataSourceImpl(sl<SupabaseClient>()),
+    )
+    ..registerLazySingleton<RevenueCatRemoteDataSource>(
+      RevenueCatRemoteDataSourceImpl.new,
+    );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -55,9 +71,13 @@ void _registerDataSources() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 void _registerRepositories() {
-  sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(sl<AuthRemoteDataSource>()),
-  );
+  sl
+    ..registerLazySingleton<AuthRepository>(
+      () => AuthRepositoryImpl(sl<AuthRemoteDataSource>()),
+    )
+    ..registerLazySingleton<SubscriptionRepository>(
+      () => SubscriptionRepositoryImpl(sl<RevenueCatRemoteDataSource>()),
+    );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -66,6 +86,7 @@ void _registerRepositories() {
 
 void _registerUseCases() {
   sl
+    // Auth use cases
     ..registerLazySingleton(() => SignInWithEmailUseCase(sl<AuthRepository>()))
     ..registerLazySingleton(() => SignInWithGoogleUseCase(sl<AuthRepository>()))
     ..registerLazySingleton(
@@ -75,7 +96,32 @@ void _registerUseCases() {
       () => SignInWithLinkedInUseCase(sl<AuthRepository>()),
     )
     ..registerLazySingleton(() => SignOutUseCase(sl<AuthRepository>()))
-    ..registerLazySingleton(() => GetCurrentUserUseCase(sl<AuthRepository>()));
+    ..registerLazySingleton(() => GetCurrentUserUseCase(sl<AuthRepository>()))
+    // Subscription use cases
+    ..registerLazySingleton(
+      () => CheckProEntitlementUseCase(sl<SubscriptionRepository>()),
+    )
+    ..registerLazySingleton(
+      () => GetOfferingsUseCase(sl<SubscriptionRepository>()),
+    )
+    ..registerLazySingleton(
+      () => PurchaseSubscriptionUseCase(sl<SubscriptionRepository>()),
+    )
+    ..registerLazySingleton(
+      () => RestorePurchasesUseCase(sl<SubscriptionRepository>()),
+    )
+    ..registerLazySingleton(
+      () => PresentPaywallUseCase(sl<SubscriptionRepository>()),
+    )
+    ..registerLazySingleton(
+      () => PresentCustomerCenterUseCase(sl<SubscriptionRepository>()),
+    )
+    ..registerLazySingleton(
+      () => SyncSubscriptionAuthUseCase(sl<SubscriptionRepository>()),
+    )
+    ..registerLazySingleton(
+      () => WatchSubscriptionStatusUseCase(sl<SubscriptionRepository>()),
+    );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -99,6 +145,21 @@ void _registerBlocs() {
       signInWithTwitter: sl<SignInWithTwitterUseCase>(),
       signInWithLinkedIn: sl<SignInWithLinkedInUseCase>(),
       signOut: sl<SignOutUseCase>(),
+    ),
+  );
+
+  // SubscriptionBloc — singleton because subscription state spans the whole
+  // app.
+  sl.registerLazySingleton<SubscriptionBloc>(
+    () => SubscriptionBloc(
+      subscriptionRepository: sl<SubscriptionRepository>(),
+      getOfferings: sl<GetOfferingsUseCase>(),
+      purchaseSubscription: sl<PurchaseSubscriptionUseCase>(),
+      restorePurchases: sl<RestorePurchasesUseCase>(),
+      presentPaywall: sl<PresentPaywallUseCase>(),
+      presentCustomerCenter: sl<PresentCustomerCenterUseCase>(),
+      syncSubscriptionAuth: sl<SyncSubscriptionAuthUseCase>(),
+      watchSubscriptionStatus: sl<WatchSubscriptionStatusUseCase>(),
     ),
   );
 }

@@ -1,0 +1,266 @@
+name: Scriptless CD Deployment Pipeline
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+    branches:
+      - staging
+  workflow_dispatch:
+    inputs:
+      flavor:
+        description: 'Target Flavor to build and deploy'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - prod
+      target_platform:
+        description: 'Target platform(s)'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - android
+          - ios
+      release_notes:
+        description: 'Changelog / Release Notes'
+        required: false
+        default: 'Automated release deployment via GitHub Actions'
+        type: string
+
+concurrency:
+  group: cd-${{ github.ref }}-${{ inputs.flavor || (github.ref == 'refs/heads/staging' && 'staging' || 'prod') }}
+  cancel-in-progress: false
+
+env:
+  FLUTTER_VERSION: '3.38.1'
+  JAVA_VERSION: '17'
+
+jobs:
+  # ============================================================================
+  # 1. SETUP ENVIRONMENT & RESOLVE TARGET FLAVOR
+  # ============================================================================
+  setup-env:
+    name: Determine Release Target
+    runs-on: ubuntu-latest
+    outputs:
+      flavor: ${{ steps.resolve.outputs.flavor }}
+      is_prod: ${{ steps.resolve.outputs.is_prod }}
+      should_android: ${{ steps.resolve.outputs.should_android }}
+      should_ios: ${{ steps.resolve.outputs.should_ios }}
+    steps:
+      - id: resolve
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            FLAVOR="${{ inputs.flavor }}"
+            TARGET="${{ inputs.target_platform }}"
+          elif [ "${{ github.ref }}" = "refs/heads/staging" ]; then
+            FLAVOR="staging"
+            TARGET="all"
+          else
+            FLAVOR="prod"
+            TARGET="all"
+          fi
+
+          echo "flavor=$FLAVOR" >> $GITHUB_OUTPUT
+          echo "is_prod=$([ "$FLAVOR" = "prod" ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
+          echo "should_android=$([ "$TARGET" = "all" ] || [ "$TARGET" = "android" ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
+          echo "should_ios=$([ "$TARGET" = "all" ] || [ "$TARGET" = "ios" ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
+
+  # ============================================================================
+  # 2. DEPLOY ANDROID (AAB & APK)
+  # ============================================================================
+  deploy-android:
+    name: Deploy Android (${{ needs.setup-env.outputs.flavor }})
+    needs: setup-env
+    if: needs.setup-env.outputs.should_android == 'true'
+    runs-on: ubuntu-latest
+    environment: ${{ needs.setup-env.outputs.flavor }}
+    timeout-minutes: 30
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'gradle'
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Configure Flavor Secrets & Keystore
+        env:
+          ENV_FILE_CONTENT: ${{ secrets.ENV_FILE_CONTENT }}
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEY_PROPERTIES: ${{ secrets.ANDROID_KEY_PROPERTIES }}
+        run: |
+          FLAVOR="${{ needs.setup-env.outputs.flavor }}"
+          # Write environment file
+          if [ -n "$ENV_FILE_CONTENT" ]; then
+            echo "$ENV_FILE_CONTENT" > ".env.$FLAVOR"
+            echo "$ENV_FILE_CONTENT" > .env
+          else
+            echo "⚠️ Warning: ENV_FILE_CONTENT secret is empty, copying example."
+            cp .env.example ".env.$FLAVOR"
+            cp .env.example .env
+          fi
+
+          # Decode Release Keystore if provided
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+          fi
+          if [ -n "$KEY_PROPERTIES" ]; then
+            echo "$KEY_PROPERTIES" > android/key.properties
+          fi
+
+      - name: Build Android App Bundle (AAB)
+        run: |
+          flutter build appbundle \
+            --flavor ${{ needs.setup-env.outputs.flavor }} \
+            --dart-define=appFlavor=${{ needs.setup-env.outputs.flavor }}
+
+      - name: Build Android APK (Release)
+        run: |
+          flutter build apk \
+            --flavor ${{ needs.setup-env.outputs.flavor }} \
+            --dart-define=appFlavor=${{ needs.setup-env.outputs.flavor }}
+
+      - name: Upload Android Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-${{ needs.setup-env.outputs.flavor }}-release
+          path: |
+            build/app/outputs/bundle/*/*.aab
+            build/app/outputs/flutter-apk/*.apk
+          retention-days: 30
+
+  # ============================================================================
+  # 3. DEPLOY IOS (TestFlight / App Store)
+  # ============================================================================
+  deploy-ios:
+    name: Deploy iOS (${{ needs.setup-env.outputs.flavor }})
+    needs: setup-env
+    if: needs.setup-env.outputs.should_ios == 'true'
+    runs-on: macos-14
+    environment: ${{ needs.setup-env.outputs.flavor }}
+    timeout-minutes: 45
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Configure Flavor Secrets
+        env:
+          ENV_FILE_CONTENT: ${{ secrets.ENV_FILE_CONTENT }}
+        run: |
+          FLAVOR="${{ needs.setup-env.outputs.flavor }}"
+          if [ -n "$ENV_FILE_CONTENT" ]; then
+            echo "$ENV_FILE_CONTENT" > ".env.$FLAVOR"
+            echo "$ENV_FILE_CONTENT" > .env
+          else
+            echo "⚠️ Warning: ENV_FILE_CONTENT secret is empty, copying example."
+            cp .env.example ".env.$FLAVOR"
+            cp .env.example .env
+          fi
+
+      - name: Setup Apple Signing Certificate & Profile
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          if [ -n "$BUILD_CERTIFICATE_BASE64" ]; then
+            CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+            PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
+            KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+
+            echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
+            echo -n "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode -o $PP_PATH
+
+            security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+            security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+            security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+            security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+            security list-keychain -d user -s $KEYCHAIN_PATH
+
+            mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+            cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/
+          else
+            echo "ℹ️ No iOS signing certificate secrets found. Skipping keychain import."
+          fi
+
+      - name: Build iOS IPA
+        run: |
+          flutter build ipa \
+            --flavor ${{ needs.setup-env.outputs.flavor }} \
+            --dart-define=appFlavor=${{ needs.setup-env.outputs.flavor }} \
+            --no-codesign || flutter build ios --flavor ${{ needs.setup-env.outputs.flavor }} --no-codesign --dart-define=appFlavor=${{ needs.setup-env.outputs.flavor }}
+
+      - name: Upload iOS Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-${{ needs.setup-env.outputs.flavor }}-release
+          path: build/ios/ipa/*.ipa
+          if-no-files-found: ignore
+          retention-days: 30
+
+  # ============================================================================
+  # 4. GITHUB RELEASE (TAGGED PRODUCTION RELEASES ONLY)
+  # ============================================================================
+  create-github-release:
+    name: Publish GitHub Release
+    needs: [setup-env, deploy-android]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: |
+            ### 🚀 Scriptless Release ${{ github.ref_name }}
+            ${{ inputs.release_notes || 'Production release build generated automatically by GitHub Actions.' }}
+
+            ---
+            *Automated build & distribution pipeline.*
+          draft: false
+          prerelease: false
+          files: |
+            release-artifacts/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

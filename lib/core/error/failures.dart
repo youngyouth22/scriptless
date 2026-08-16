@@ -39,3 +39,15 @@ class ValidationFailure extends Failure {
   /// Creates a [ValidationFailure].
   const ValidationFailure(super.message);
 }
+
+/// Returned when a subscription or in-app purchase operation fails.
+class SubscriptionFailure extends Failure {
+  /// Creates a [SubscriptionFailure].
+  const SubscriptionFailure(super.message);
+}
+
+/// Returned when the user cancels an in-app purchase flow.
+class PurchaseCancelledFailure extends Failure {
+  /// Creates a [PurchaseCancelledFailure].
+  const PurchaseCancelledFailure([super.message = 'Purchase was cancelled.']);
+}
