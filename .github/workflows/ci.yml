@@ -59,7 +59,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Flutter SDK
         uses: subosito/flutter-action@v2
@@ -89,7 +89,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Flutter SDK
         uses: subosito/flutter-action@v2
@@ -149,7 +149,7 @@ jobs:
         flavor: [dev, staging, prod]
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Java JDK
         uses: actions/setup-java@v4
@@ -198,7 +198,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Flutter SDK
         uses: subosito/flutter-action@v2
