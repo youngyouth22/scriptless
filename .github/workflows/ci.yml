@@ -129,7 +129,7 @@ jobs:
 
       - name: Upload Coverage Artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: code-coverage-report
           path: coverage/
@@ -182,7 +182,7 @@ jobs:
             --dart-define=appFlavor=${{ matrix.flavor }}
 
       - name: Upload Build Artifact (${{ matrix.flavor }})
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: android-${{ matrix.flavor }}-apk
           path: build/app/outputs/flutter-apk/*.apk

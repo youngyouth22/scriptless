@@ -139,7 +139,7 @@ jobs:
             --dart-define=appFlavor=${{ needs.setup-env.outputs.flavor }}
 
       - name: Upload Android Release Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: android-${{ needs.setup-env.outputs.flavor }}-release
           path: |
@@ -221,7 +221,7 @@ jobs:
             --no-codesign || flutter build ios --flavor ${{ needs.setup-env.outputs.flavor }} --no-codesign --dart-define=appFlavor=${{ needs.setup-env.outputs.flavor }}
 
       - name: Upload iOS Release Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ios-${{ needs.setup-env.outputs.flavor }}-release
           path: build/ios/ipa/*.ipa
