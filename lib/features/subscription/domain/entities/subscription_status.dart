@@ -15,10 +15,10 @@ class SubscriptionStatus {
 
   /// Factory for an unauthenticated / default free user status.
   factory SubscriptionStatus.free() => const SubscriptionStatus(
-        isPro: false,
-        activeEntitlements: <String>[],
-        allPurchasedProductIdentifiers: <String>[],
-      );
+    isPro: false,
+    activeEntitlements: <String>[],
+    allPurchasedProductIdentifiers: <String>[],
+  );
 
   /// Whether the user has an active "Scriptless Pro" entitlement.
   final bool isPro;

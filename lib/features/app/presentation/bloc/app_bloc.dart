@@ -10,6 +10,7 @@ import 'package:scriptless/core/usecase/usecase.dart';
 import 'package:scriptless/features/auth/domain/entities/app_user.dart';
 import 'package:scriptless/features/auth/domain/repositories/auth_repository.dart';
 import 'package:scriptless/features/auth/domain/usecases/get_current_user_usecase.dart';
+import 'package:scriptless/features/onboarding/domain/usecases/has_seen_onboarding_usecase.dart';
 
 part 'app_event.dart';
 part 'app_state.dart';
@@ -24,9 +25,11 @@ class AppBloc extends Bloc<AppEvent, AppState> {
   AppBloc({
     required AuthRepository authRepository,
     required GetCurrentUserUseCase getCurrentUser,
-  })  : _authRepository = authRepository,
-        _getCurrentUser = getCurrentUser,
-        super(const AppLoading()) {
+    required HasSeenOnboardingUseCase hasSeenOnboarding,
+  }) : _authRepository = authRepository,
+       _getCurrentUser = getCurrentUser,
+       _hasSeenOnboarding = hasSeenOnboarding,
+       super(const AppLoading()) {
     on<AppStarted>(_onAppStarted);
     on<AppUserAuthenticated>(_onUserAuthenticated);
     on<AppUserUnauthenticated>(_onUserUnauthenticated);
@@ -34,6 +37,7 @@ class AppBloc extends Bloc<AppEvent, AppState> {
 
   final AuthRepository _authRepository;
   final GetCurrentUserUseCase _getCurrentUser;
+  final HasSeenOnboardingUseCase _hasSeenOnboarding;
 
   StreamSubscription<AppUser?>? _authSubscription;
 
@@ -62,21 +66,55 @@ class AppBloc extends Bloc<AppEvent, AppState> {
     // Perform an immediate one-shot check so we don't wait for the stream.
     final result = await _getCurrentUser(const NoParams());
 
-    result.fold(
-      (failure) {
+    await result.fold(
+      (failure) async {
         log(
           'AppBloc: getCurrentUser failed — ${failure.message}',
           name: 'app',
         );
-        emit(const AppUnauthenticated());
+        await _emitUnauthenticatedOrOnboarding(emit);
       },
-      (user) {
+      (user) async {
         if (user != null && user.isNotEmpty) {
           log('AppBloc: session found — user ${user.id}', name: 'app');
           emit(AppAuthenticated(user));
         } else {
           log('AppBloc: no active session', name: 'app');
+          await _emitUnauthenticatedOrOnboarding(emit);
+        }
+      },
+    );
+  }
+
+  /// Checks the local [HasSeenOnboardingUseCase] flag and emits either
+  /// [AppNeedsOnboarding] (first launch) or [AppUnauthenticated] (returning).
+  Future<void> _emitUnauthenticatedOrOnboarding(Emitter<AppState> emit) async {
+    final seenResult = await _hasSeenOnboarding(const NoParams());
+    seenResult.fold(
+      (failure) {
+        // On any local storage error, default to unauthenticated
+        // (safe fallback — never block the user).
+        log(
+          'AppBloc: hasSeenOnboarding failed — ${failure.message}; '
+          'defaulting to AppUnauthenticated',
+          name: 'app',
+        );
+        emit(const AppUnauthenticated());
+      },
+      (hasSeen) {
+        if (hasSeen) {
+          log(
+            'AppBloc: onboarding already seen '
+            '— AppUnauthenticated',
+            name: 'app',
+          );
           emit(const AppUnauthenticated());
+        } else {
+          log(
+            'AppBloc: first launch — AppNeedsOnboarding',
+            name: 'app',
+          );
+          emit(const AppNeedsOnboarding());
         }
       },
     );

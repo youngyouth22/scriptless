@@ -162,9 +162,7 @@ final class SubscriptionActionSuccess extends SubscriptionState {
 
   @override
   int get hashCode =>
-      message.hashCode ^
-      currentStatus.hashCode ^
-      availableOfferings.hashCode;
+      message.hashCode ^ currentStatus.hashCode ^ availableOfferings.hashCode;
 }
 
 /// Error state emitted when a subscription operation encounters a failure.

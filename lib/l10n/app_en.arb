@@ -1,0 +1,7 @@
+{
+  "@@locale": "en",
+  "appTitle": "Scriptless",
+  "@appTitle": {
+    "description": "The title of the application"
+  }
+}

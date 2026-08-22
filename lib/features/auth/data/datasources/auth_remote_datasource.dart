@@ -147,8 +147,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Stream<AppUserModel?> get authStateChanges => _client.auth.onAuthStateChange
-      .map((event) {
+  Stream<AppUserModel?> get authStateChanges =>
+      _client.auth.onAuthStateChange.map((event) {
         final user = event.session?.user;
         if (user == null) return null;
         return AppUserModel.fromSupabaseUser(user);

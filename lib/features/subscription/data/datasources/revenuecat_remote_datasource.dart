@@ -48,8 +48,9 @@ class RevenueCatRemoteDataSourceImpl implements RevenueCatRemoteDataSource {
   /// Creates a [RevenueCatRemoteDataSourceImpl].
   RevenueCatRemoteDataSourceImpl({
     StreamController<CustomerInfo>? customerInfoStreamController,
-  }) : _customerInfoController = customerInfoStreamController ??
-            StreamController<CustomerInfo>.broadcast() {
+  }) : _customerInfoController =
+           customerInfoStreamController ??
+           StreamController<CustomerInfo>.broadcast() {
     Purchases.addCustomerInfoUpdateListener(_onCustomerInfoUpdated);
   }
 
@@ -63,8 +64,7 @@ class RevenueCatRemoteDataSourceImpl implements RevenueCatRemoteDataSource {
 
   @override
   Future<void> initialize(String apiKey, {String? appUserId}) async {
-    final configuration = PurchasesConfiguration(apiKey)
-      ..appUserID = appUserId;
+    final configuration = PurchasesConfiguration(apiKey)..appUserID = appUserId;
     await Purchases.configure(configuration);
   }
 

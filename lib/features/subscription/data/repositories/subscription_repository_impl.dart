@@ -141,8 +141,9 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
     try {
       final entitlement =
           requiredEntitlementId ?? SubscriptionConstants.proEntitlementId;
-      final result =
-          await _remoteDataSource.presentPaywallIfNeeded(entitlement);
+      final result = await _remoteDataSource.presentPaywallIfNeeded(
+        entitlement,
+      );
 
       switch (result) {
         case PaywallResult.purchased:

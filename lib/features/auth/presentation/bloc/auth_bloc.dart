@@ -13,30 +13,34 @@ import 'package:scriptless/features/auth/domain/usecases/sign_in_with_google_use
 import 'package:scriptless/features/auth/domain/usecases/sign_in_with_linkedin_usecase.dart';
 import 'package:scriptless/features/auth/domain/usecases/sign_in_with_twitter_usecase.dart';
 import 'package:scriptless/features/auth/domain/usecases/sign_out_usecase.dart';
+import 'package:scriptless/features/auth/domain/usecases/sign_up_with_email_usecase.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
 
-/// Manages authentication state for email and OAuth sign-in / sign-out flows.
+/// Manages authentication state for email and OAuth sign-in / sign-up / sign-out flows.
 ///
-/// Uses [SignInWithEmailUseCase], [SignInWithGoogleUseCase],
-/// [SignInWithTwitterUseCase], [SignInWithLinkedInUseCase], [SignOutUseCase].
+/// Uses [SignInWithEmailUseCase], [SignUpWithEmailUseCase],
+/// [SignInWithGoogleUseCase], [SignInWithTwitterUseCase],
+/// [SignInWithLinkedInUseCase], [SignOutUseCase].
 /// Emits: [AuthInitial] → [AuthLoading] | [AuthOAuthInProgress] →
 /// [AuthSuccess] | [AuthFailureState] | [AuthSignedOut].
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   /// Creates an [AuthBloc].
   AuthBloc({
     required SignInWithEmailUseCase signInWithEmail,
+    required SignUpWithEmailUseCase signUpWithEmail,
     required SignInWithGoogleUseCase signInWithGoogle,
     required SignInWithTwitterUseCase signInWithTwitter,
     required SignInWithLinkedInUseCase signInWithLinkedIn,
     required SignOutUseCase signOut,
-  })  : _signInWithEmail = signInWithEmail,
-        _signInWithGoogle = signInWithGoogle,
-        _signInWithTwitter = signInWithTwitter,
-        _signInWithLinkedIn = signInWithLinkedIn,
-        _signOut = signOut,
-        super(const AuthInitial()) {
+  }) : _signInWithEmail = signInWithEmail,
+       _signUpWithEmail = signUpWithEmail,
+       _signInWithGoogle = signInWithGoogle,
+       _signInWithTwitter = signInWithTwitter,
+       _signInWithLinkedIn = signInWithLinkedIn,
+       _signOut = signOut,
+       super(const AuthInitial()) {
     on<AuthSignInRequested>(_onSignInRequested);
     on<AuthSignUpRequested>(_onSignUpRequested);
     on<AuthGoogleSignInRequested>(_onGoogleSignInRequested);
@@ -46,6 +50,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   final SignInWithEmailUseCase _signInWithEmail;
+  final SignUpWithEmailUseCase _signUpWithEmail;
   final SignInWithGoogleUseCase _signInWithGoogle;
   final SignInWithTwitterUseCase _signInWithTwitter;
   final SignInWithLinkedInUseCase _signInWithLinkedIn;
@@ -55,7 +60,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthSignInRequested event,
     Emitter<AuthState> emit,
   ) async {
-    emit(const AuthLoading());
+    emit(const AuthLoading(provider: AuthProviderType.emailSignIn));
     log('AuthBloc: sign-in requested for ${event.email}', name: 'auth');
 
     final result = await _signInWithEmail(
@@ -81,14 +86,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthSignUpRequested event,
     Emitter<AuthState> emit,
   ) async {
-    emit(const AuthLoading());
+    emit(const AuthLoading(provider: AuthProviderType.emailSignUp));
     log('AuthBloc: sign-up requested for ${event.email}', name: 'auth');
 
-    // TODO(backend): wire SignUpWithEmailUseCase once created.
-    emit(
-      const AuthFailureState(
-        AuthFailure('Sign-up use case not yet wired.'),
-      ),
+    final result = await _signUpWithEmail(
+      SignUpParams(email: event.email, password: event.password),
+    );
+
+    result.fold(
+      (failure) {
+        log(
+          'AuthBloc: sign-up failed — ${failure.message}',
+          name: 'auth',
+        );
+        emit(AuthFailureState(failure));
+      },
+      (user) {
+        log('AuthBloc: sign-up success — user ${user.id}', name: 'auth');
+        emit(AuthSuccess(user));
+      },
     );
   }
 
@@ -96,7 +112,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthGoogleSignInRequested event,
     Emitter<AuthState> emit,
   ) async {
-    emit(const AuthLoading());
+    emit(const AuthLoading(provider: AuthProviderType.google));
     log('AuthBloc: Google OAuth requested', name: 'auth');
 
     final result = await _signInWithGoogle(const NoParams());
@@ -117,7 +133,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthTwitterSignInRequested event,
     Emitter<AuthState> emit,
   ) async {
-    emit(const AuthLoading());
+    emit(const AuthLoading(provider: AuthProviderType.twitter));
     log('AuthBloc: Twitter OAuth requested', name: 'auth');
 
     final result = await _signInWithTwitter(const NoParams());
@@ -141,7 +157,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthLinkedInSignInRequested event,
     Emitter<AuthState> emit,
   ) async {
-    emit(const AuthLoading());
+    emit(const AuthLoading(provider: AuthProviderType.linkedIn));
     log('AuthBloc: LinkedIn OAuth requested', name: 'auth');
 
     final result = await _signInWithLinkedIn(const NoParams());
@@ -165,7 +181,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthSignOutRequested event,
     Emitter<AuthState> emit,
   ) async {
-    emit(const AuthLoading());
+    emit(const AuthLoading(provider: AuthProviderType.signOut));
     log('AuthBloc: sign-out requested', name: 'auth');
 
     final result = await _signOut(const NoParams());

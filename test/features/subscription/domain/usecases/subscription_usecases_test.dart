@@ -55,8 +55,9 @@ void main() {
     });
 
     test('should return true when user has pro entitlement', () async {
-      when(() => mockRepository.getSubscriptionStatus())
-          .thenAnswer((_) async => Right(tStatusPro));
+      when(
+        () => mockRepository.getSubscriptionStatus(),
+      ).thenAnswer((_) async => Right(tStatusPro));
 
       final result = await useCase(const NoParams());
 
@@ -65,8 +66,9 @@ void main() {
     });
 
     test('should return false when user is free', () async {
-      when(() => mockRepository.getSubscriptionStatus())
-          .thenAnswer((_) async => Right(tStatusFree));
+      when(
+        () => mockRepository.getSubscriptionStatus(),
+      ).thenAnswer((_) async => Right(tStatusFree));
 
       final result = await useCase(const NoParams());
 
@@ -136,8 +138,9 @@ void main() {
     });
 
     test('should return updated SubscriptionStatus upon purchase', () async {
-      when(() => mockRepository.purchasePackage(tPackage))
-          .thenAnswer((_) async => Right(tStatusPro));
+      when(
+        () => mockRepository.purchasePackage(tPackage),
+      ).thenAnswer((_) async => Right(tStatusPro));
 
       final result = await useCase(tPackage);
 
@@ -168,8 +171,9 @@ void main() {
     });
 
     test('should return restored SubscriptionStatus', () async {
-      when(() => mockRepository.restorePurchases())
-          .thenAnswer((_) async => Right(tStatusPro));
+      when(
+        () => mockRepository.restorePurchases(),
+      ).thenAnswer((_) async => Right(tStatusPro));
 
       final result = await useCase(const NoParams());
 
@@ -201,30 +205,32 @@ void main() {
       useCase = PresentPaywallUseCase(mockRepository);
     });
 
-    test('should delegate to presentPaywallIfNeeded when onlyIfNeeded is true',
-        () async {
-      when(
-        () => mockRepository.presentPaywallIfNeeded(
-          requiredEntitlementId: any(named: 'requiredEntitlementId'),
-        ),
-      ).thenAnswer((_) async => const Right(true));
-
-      final result = await useCase(const PresentPaywallParams());
-
-      expect(result, const Right<Failure, bool>(true));
-      verify(
-        () => mockRepository.presentPaywallIfNeeded(),
-      ).called(1);
-    });
-
     test(
-        'should present unconditionally and check status when onlyIfNeeded '
-        'is false',
-        () async {
-      when(() => mockRepository.presentPaywall())
-          .thenAnswer((_) async => const Right(unit));
-      when(() => mockRepository.getSubscriptionStatus())
-          .thenAnswer((_) async => Right(tStatusPro));
+      'should delegate to presentPaywallIfNeeded when onlyIfNeeded is true',
+      () async {
+        when(
+          () => mockRepository.presentPaywallIfNeeded(
+            requiredEntitlementId: any(named: 'requiredEntitlementId'),
+          ),
+        ).thenAnswer((_) async => const Right(true));
+
+        final result = await useCase(const PresentPaywallParams());
+
+        expect(result, const Right<Failure, bool>(true));
+        verify(
+          () => mockRepository.presentPaywallIfNeeded(),
+        ).called(1);
+      },
+    );
+
+    test('should present unconditionally and check status when onlyIfNeeded '
+        'is false', () async {
+      when(
+        () => mockRepository.presentPaywall(),
+      ).thenAnswer((_) async => const Right(unit));
+      when(
+        () => mockRepository.getSubscriptionStatus(),
+      ).thenAnswer((_) async => Right(tStatusPro));
 
       final result = await useCase(
         const PresentPaywallParams(onlyIfNeeded: false),
@@ -243,8 +249,9 @@ void main() {
     });
 
     test('should delegate to repository presentCustomerCenter', () async {
-      when(() => mockRepository.presentCustomerCenter())
-          .thenAnswer((_) async => const Right(unit));
+      when(
+        () => mockRepository.presentCustomerCenter(),
+      ).thenAnswer((_) async => const Right(unit));
 
       final result = await useCase(const NoParams());
 
@@ -261,8 +268,9 @@ void main() {
     });
 
     test('should log in when userId is provided', () async {
-      when(() => mockRepository.logIn('user-456'))
-          .thenAnswer((_) async => const Right(unit));
+      when(
+        () => mockRepository.logIn('user-456'),
+      ).thenAnswer((_) async => const Right(unit));
 
       final result = await useCase('user-456');
 
@@ -271,8 +279,9 @@ void main() {
     });
 
     test('should log out when userId is null', () async {
-      when(() => mockRepository.logOut())
-          .thenAnswer((_) async => const Right(unit));
+      when(
+        () => mockRepository.logOut(),
+      ).thenAnswer((_) async => const Right(unit));
 
       final result = await useCase(null);
 

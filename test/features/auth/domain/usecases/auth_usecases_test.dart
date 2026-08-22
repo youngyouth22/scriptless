@@ -11,6 +11,7 @@ import 'package:scriptless/features/auth/domain/usecases/sign_in_with_google_use
 import 'package:scriptless/features/auth/domain/usecases/sign_in_with_linkedin_usecase.dart';
 import 'package:scriptless/features/auth/domain/usecases/sign_in_with_twitter_usecase.dart';
 import 'package:scriptless/features/auth/domain/usecases/sign_out_usecase.dart';
+import 'package:scriptless/features/auth/domain/usecases/sign_up_with_email_usecase.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 
@@ -47,11 +48,11 @@ void main() {
           email: any(named: 'email'),
           password: any(named: 'password'),
         ),
-      ).thenAnswer((_) async => const Right(tUser));
+      ).thenAnswer((_) async => const Right<Failure, AppUser>(tUser));
 
       final result = await signInWithEmailUseCase(tParams);
 
-      expect(result, const Right(tUser));
+      expect(result, const Right<Failure, AppUser>(tUser));
       verify(
         () => mockRepository.signInWithEmail(
           email: tParams.email,
@@ -67,64 +68,96 @@ void main() {
           email: any(named: 'email'),
           password: any(named: 'password'),
         ),
-      ).thenAnswer((_) async => const Left(tFailure));
+      ).thenAnswer((_) async => const Left<Failure, AppUser>(tFailure));
 
       final result = await signInWithEmailUseCase(tParams);
 
-      expect(result, const Left(tFailure));
+      expect(result, const Left<Failure, AppUser>(tFailure));
+    });
+  });
+
+  group('SignUpWithEmailUseCase', () {
+    const tParams = SignUpParams(
+      email: 'test@example.com',
+      password: 'password123',
+    );
+
+    test('should return AppUser on successful sign up', () async {
+      final signUpUseCase = SignUpWithEmailUseCase(mockRepository);
+      when(
+        () => mockRepository.signUpWithEmail(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenAnswer((_) async => const Right<Failure, AppUser>(tUser));
+
+      final result = await signUpUseCase(tParams);
+
+      expect(result, const Right<Failure, AppUser>(tUser));
+      verify(
+        () => mockRepository.signUpWithEmail(
+          email: tParams.email,
+          password: tParams.password,
+        ),
+      ).called(1);
     });
   });
 
   group('OAuth UseCases', () {
     test('SignInWithGoogleUseCase delegates to repository', () async {
-      when(() => mockRepository.signInWithGoogle())
-          .thenAnswer((_) async => const Right(unit));
+      when(
+        () => mockRepository.signInWithGoogle(),
+      ).thenAnswer((_) async => const Right<Failure, Unit>(unit));
 
       final result = await signInWithGoogleUseCase(const NoParams());
 
-      expect(result, const Right(unit));
+      expect(result, const Right<Failure, Unit>(unit));
       verify(() => mockRepository.signInWithGoogle()).called(1);
     });
 
     test('SignInWithTwitterUseCase delegates to repository', () async {
-      when(() => mockRepository.signInWithTwitter())
-          .thenAnswer((_) async => const Right(unit));
+      when(
+        () => mockRepository.signInWithTwitter(),
+      ).thenAnswer((_) async => const Right<Failure, Unit>(unit));
 
       final result = await signInWithTwitterUseCase(const NoParams());
 
-      expect(result, const Right(unit));
+      expect(result, const Right<Failure, Unit>(unit));
       verify(() => mockRepository.signInWithTwitter()).called(1);
     });
 
     test('SignInWithLinkedInUseCase delegates to repository', () async {
-      when(() => mockRepository.signInWithLinkedIn())
-          .thenAnswer((_) async => const Right(unit));
+      when(
+        () => mockRepository.signInWithLinkedIn(),
+      ).thenAnswer((_) async => const Right<Failure, Unit>(unit));
 
       final result = await signInWithLinkedInUseCase(const NoParams());
 
-      expect(result, const Right(unit));
+      expect(result, const Right<Failure, Unit>(unit));
       verify(() => mockRepository.signInWithLinkedIn()).called(1);
     });
   });
 
   group('SignOutUseCase & GetCurrentUserUseCase', () {
     test('SignOutUseCase delegates to repository', () async {
-      when(() => mockRepository.signOut())
-          .thenAnswer((_) async => const Right(unit));
+      when(
+        () => mockRepository.signOut(),
+      ).thenAnswer((_) async => const Right<Failure, Unit>(unit));
 
       final result = await signOutUseCase(const NoParams());
 
-      expect(result, const Right(unit));
+      expect(result, const Right<Failure, Unit>(unit));
       verify(() => mockRepository.signOut()).called(1);
     });
 
     test('GetCurrentUserUseCase returns current user', () async {
-      when(() => mockRepository.getCurrentUser())
-          .thenAnswer((_) async => const Right(tUser));
+      when(
+        () => mockRepository.getCurrentUser(),
+      ).thenAnswer((_) async => const Right<Failure, AppUser?>(tUser));
 
       final result = await getCurrentUserUseCase(const NoParams());
 
-      expect(result, const Right(tUser));
+      expect(result, const Right<Failure, AppUser?>(tUser));
       verify(() => mockRepository.getCurrentUser()).called(1);
     });
   });

@@ -28,15 +28,15 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     required PresentCustomerCenterUseCase presentCustomerCenter,
     required SyncSubscriptionAuthUseCase syncSubscriptionAuth,
     required WatchSubscriptionStatusUseCase watchSubscriptionStatus,
-  })  : _subscriptionRepository = subscriptionRepository,
-        _getOfferings = getOfferings,
-        _purchaseSubscription = purchaseSubscription,
-        _restorePurchases = restorePurchases,
-        _presentPaywall = presentPaywall,
-        _presentCustomerCenter = presentCustomerCenter,
-        _syncSubscriptionAuth = syncSubscriptionAuth,
-        _watchSubscriptionStatus = watchSubscriptionStatus,
-        super(const SubscriptionInitial()) {
+  }) : _subscriptionRepository = subscriptionRepository,
+       _getOfferings = getOfferings,
+       _purchaseSubscription = purchaseSubscription,
+       _restorePurchases = restorePurchases,
+       _presentPaywall = presentPaywall,
+       _presentCustomerCenter = presentCustomerCenter,
+       _syncSubscriptionAuth = syncSubscriptionAuth,
+       _watchSubscriptionStatus = watchSubscriptionStatus,
+       super(const SubscriptionInitial()) {
     on<SubscriptionCheckRequested>(_onCheckRequested);
     on<SubscriptionOfferingsRequested>(_onOfferingsRequested);
     on<SubscriptionPurchaseRequested>(_onPurchaseRequested);

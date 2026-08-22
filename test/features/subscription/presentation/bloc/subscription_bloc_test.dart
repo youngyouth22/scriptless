@@ -88,20 +88,21 @@ void main() {
     mockSyncSubscriptionAuth = MockSyncSubscriptionAuthUseCase();
     mockWatchSubscriptionStatus = MockWatchSubscriptionStatusUseCase();
 
-    when(() => mockWatchSubscriptionStatus())
-        .thenAnswer((_) => const Stream.empty());
+    when(
+      () => mockWatchSubscriptionStatus(),
+    ).thenAnswer((_) => const Stream.empty());
   });
 
   SubscriptionBloc buildBloc() => SubscriptionBloc(
-        subscriptionRepository: mockRepository,
-        getOfferings: mockGetOfferings,
-        purchaseSubscription: mockPurchaseSubscription,
-        restorePurchases: mockRestorePurchases,
-        presentPaywall: mockPresentPaywall,
-        presentCustomerCenter: mockPresentCustomerCenter,
-        syncSubscriptionAuth: mockSyncSubscriptionAuth,
-        watchSubscriptionStatus: mockWatchSubscriptionStatus,
-      );
+    subscriptionRepository: mockRepository,
+    getOfferings: mockGetOfferings,
+    purchaseSubscription: mockPurchaseSubscription,
+    restorePurchases: mockRestorePurchases,
+    presentPaywall: mockPresentPaywall,
+    presentCustomerCenter: mockPresentCustomerCenter,
+    syncSubscriptionAuth: mockSyncSubscriptionAuth,
+    watchSubscriptionStatus: mockWatchSubscriptionStatus,
+  );
 
   group('SubscriptionBloc', () {
     test('initial state should be SubscriptionInitial', () {
@@ -111,10 +112,12 @@ void main() {
     blocTest<SubscriptionBloc, SubscriptionState>(
       'emits [SubscriptionLoading, SubscriptionLoaded] when check succeeds',
       build: () {
-        when(() => mockRepository.getSubscriptionStatus())
-            .thenAnswer((_) async => Right(tStatusPro));
-        when(() => mockGetOfferings(any()))
-            .thenAnswer((_) async => const Right([tPackage]));
+        when(
+          () => mockRepository.getSubscriptionStatus(),
+        ).thenAnswer((_) async => Right(tStatusPro));
+        when(
+          () => mockGetOfferings(any()),
+        ).thenAnswer((_) async => const Right([tPackage]));
         return buildBloc();
       },
       act: (bloc) => bloc.add(const SubscriptionCheckRequested()),
@@ -133,8 +136,9 @@ void main() {
         when(() => mockRepository.getSubscriptionStatus()).thenAnswer(
           (_) async => const Left(SubscriptionFailure('Fetch failed')),
         );
-        when(() => mockGetOfferings(any()))
-            .thenAnswer((_) async => const Right([tPackage]));
+        when(
+          () => mockGetOfferings(any()),
+        ).thenAnswer((_) async => const Right([tPackage]));
         return buildBloc();
       },
       act: (bloc) => bloc.add(const SubscriptionCheckRequested()),
@@ -150,8 +154,9 @@ void main() {
       'emits [SubscriptionActionInProgress, SubscriptionActionSuccess] '
       'on purchase',
       build: () {
-        when(() => mockPurchaseSubscription(tPackage))
-            .thenAnswer((_) async => Right(tStatusPro));
+        when(
+          () => mockPurchaseSubscription(tPackage),
+        ).thenAnswer((_) async => Right(tStatusPro));
         return buildBloc();
       },
       act: (bloc) => bloc.add(const SubscriptionPurchaseRequested(tPackage)),
@@ -191,8 +196,9 @@ void main() {
       'emits [SubscriptionActionInProgress, SubscriptionActionSuccess] '
       'on restore',
       build: () {
-        when(() => mockRestorePurchases(any()))
-            .thenAnswer((_) async => Right(tStatusPro));
+        when(
+          () => mockRestorePurchases(any()),
+        ).thenAnswer((_) async => Right(tStatusPro));
         return buildBloc();
       },
       act: (bloc) => bloc.add(const SubscriptionRestoreRequested()),

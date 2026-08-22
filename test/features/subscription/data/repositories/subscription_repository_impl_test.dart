@@ -32,8 +32,9 @@ void main() {
 
   group('getSubscriptionStatus', () {
     test('returns SubscriptionFailure on generic Exception', () async {
-      when(() => mockDataSource.getCustomerInfo())
-          .thenThrow(Exception('RevenueCat not initialized'));
+      when(
+        () => mockDataSource.getCustomerInfo(),
+      ).thenThrow(Exception('RevenueCat not initialized'));
 
       final result = await repository.getSubscriptionStatus();
 
@@ -84,8 +85,9 @@ void main() {
         'schemaVersion': 3,
       });
 
-      when(() => mockDataSource.logIn('user-123'))
-          .thenAnswer((_) async => customerInfo);
+      when(
+        () => mockDataSource.logIn('user-123'),
+      ).thenAnswer((_) async => customerInfo);
 
       final result = await repository.logIn('user-123');
 
@@ -134,18 +136,19 @@ void main() {
     });
 
     test(
-        'returns true when PaywallResult is notPresented (already pro)',
-        () async {
-      when(
-        () => mockDataSource.presentPaywallIfNeeded(
-          SubscriptionConstants.proEntitlementId,
-        ),
-      ).thenAnswer((_) async => PaywallResult.notPresented);
+      'returns true when PaywallResult is notPresented (already pro)',
+      () async {
+        when(
+          () => mockDataSource.presentPaywallIfNeeded(
+            SubscriptionConstants.proEntitlementId,
+          ),
+        ).thenAnswer((_) async => PaywallResult.notPresented);
 
-      final result = await repository.presentPaywallIfNeeded();
+        final result = await repository.presentPaywallIfNeeded();
 
-      expect(result, const Right<Failure, bool>(true));
-    });
+        expect(result, const Right<Failure, bool>(true));
+      },
+    );
 
     test('returns false when PaywallResult is cancelled', () async {
       when(
@@ -178,8 +181,9 @@ void main() {
 
   group('presentPaywall', () {
     test('returns unit when paywall presents without error', () async {
-      when(() => mockDataSource.presentPaywall())
-          .thenAnswer((_) async => PaywallResult.purchased);
+      when(
+        () => mockDataSource.presentPaywall(),
+      ).thenAnswer((_) async => PaywallResult.purchased);
 
       final result = await repository.presentPaywall();
 
@@ -187,8 +191,9 @@ void main() {
     });
 
     test('returns SubscriptionFailure when paywall returns error', () async {
-      when(() => mockDataSource.presentPaywall())
-          .thenAnswer((_) async => PaywallResult.error);
+      when(
+        () => mockDataSource.presentPaywall(),
+      ).thenAnswer((_) async => PaywallResult.error);
 
       final result = await repository.presentPaywall();
 
@@ -198,8 +203,9 @@ void main() {
 
   group('presentCustomerCenter', () {
     test('returns unit when customer center succeeds', () async {
-      when(() => mockDataSource.presentCustomerCenter())
-          .thenAnswer((_) async {});
+      when(
+        () => mockDataSource.presentCustomerCenter(),
+      ).thenAnswer((_) async {});
 
       final result = await repository.presentCustomerCenter();
 
@@ -207,8 +213,9 @@ void main() {
     });
 
     test('returns Failure when customer center throws', () async {
-      when(() => mockDataSource.presentCustomerCenter())
-          .thenThrow(Exception('Customer center failed'));
+      when(
+        () => mockDataSource.presentCustomerCenter(),
+      ).thenThrow(Exception('Customer center failed'));
 
       final result = await repository.presentCustomerCenter();
 

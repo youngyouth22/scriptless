@@ -50,9 +50,7 @@ class SubscriptionPackage {
 
   @override
   int get hashCode =>
-      identifier.hashCode ^
-      offeringIdentifier.hashCode ^
-      priceString.hashCode;
+      identifier.hashCode ^ offeringIdentifier.hashCode ^ priceString.hashCode;
 }
 
 /// Package duration / type classification.

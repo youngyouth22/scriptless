@@ -16,6 +16,5 @@ class PurchaseSubscriptionUseCase
   @override
   Future<Either<Failure, SubscriptionStatus>> call(
     SubscriptionPackage package,
-  ) =>
-      _repository.purchasePackage(package);
+  ) => _repository.purchasePackage(package);
 }

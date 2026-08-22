@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
+import 'package:scriptless/common/resources/app_themes.dart';
 import 'package:scriptless/di/injection_container.dart';
 import 'package:scriptless/flavors.dart';
 
@@ -14,10 +16,19 @@ class App extends StatelessWidget {
 
     return MaterialApp.router(
       title: F.title,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
+      theme: AppThemes.lightTheme,
+      // darkTheme: AppThemes.darkTheme,
+      debugShowCheckedModeBanner: false,
+      themeMode: ThemeMode.light,
+      supportedLocales: const [
+        Locale('en'),
+        Locale('fr'),
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       routerConfig: router,
       builder: (context, child) => _flavorBanner(
         child: child ?? const SizedBox.shrink(),

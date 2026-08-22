@@ -9,6 +9,7 @@ import 'package:scriptless/features/subscription/presentation/bloc/subscription_
 import 'package:scriptless/flavors.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+///
 // Provided by flutter_flavorizr via --dart-define=appFlavor=<flavor>
 const String appFlavor = String.fromEnvironment('appFlavor');
 
@@ -17,6 +18,7 @@ void main() async {
 
   F.appFlavor = Flavor.values.firstWhere(
     (element) => element.name == appFlavor,
+    orElse: () => Flavor.dev,
   );
 
   // Load environment variables based on flavor

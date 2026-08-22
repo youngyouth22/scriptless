@@ -11,10 +11,45 @@ final class AuthInitial extends AuthState {
   const AuthInitial();
 }
 
+/// Authentication provider types used to identify active operations.
+enum AuthProviderType {
+  /// Sign in with email and password.
+  emailSignIn,
+
+  /// Sign up with email and password.
+  emailSignUp,
+
+  /// Google OAuth provider.
+  google,
+
+  /// Twitter / X OAuth provider.
+  twitter,
+
+  /// LinkedIn OAuth provider.
+  linkedIn,
+
+  /// Sign out operation.
+  signOut,
+}
+
 /// An async auth operation (sign-in / sign-up / sign-out) is in progress.
+@immutable
 final class AuthLoading extends AuthState {
   /// Default constructor.
-  const AuthLoading();
+  const AuthLoading({this.provider});
+
+  /// The specific provider or action currently loading.
+  final AuthProviderType? provider;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AuthLoading &&
+          runtimeType == other.runtimeType &&
+          provider == other.provider;
+
+  @override
+  int get hashCode => provider.hashCode;
 }
 
 /// OAuth browser has opened and waiting for deep link callback.

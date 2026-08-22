@@ -32,15 +32,15 @@ class AppUserModel extends AppUser {
 
   /// Serializes this model to a JSON map (e.g. for local caching).
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'email': email,
-        'display_name': displayName,
-      };
+    'id': id,
+    'email': email,
+    'display_name': displayName,
+  };
 
   /// Converts the model to the domain entity.
   AppUser toEntity() => AppUser(
-        id: id,
-        email: email,
-        displayName: displayName,
-      );
+    id: id,
+    email: email,
+    displayName: displayName,
+  );
 }
