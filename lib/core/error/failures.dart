@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart';
+
 /// Base class for all domain-layer failures.
+@immutable
 abstract class Failure {
   /// Creates a [Failure] with a [message].
   const Failure(this.message);
@@ -60,4 +63,10 @@ class SubscriptionFailure extends Failure {
 class PurchaseCancelledFailure extends Failure {
   /// Creates a [PurchaseCancelledFailure].
   const PurchaseCancelledFailure([super.message = 'Purchase was cancelled.']);
+}
+
+/// Returned when an OS permission request or check fails.
+class PermissionFailure extends Failure {
+  /// Creates a [PermissionFailure].
+  const PermissionFailure([super.message = 'Permission request failed.']);
 }

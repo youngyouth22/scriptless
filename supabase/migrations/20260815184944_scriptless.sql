@@ -881,17 +881,48 @@ CREATE TRIGGER trigger_update_scenario_stats
   EXECUTE FUNCTION update_scenario_stats();
 
 -- Auto-create profile on signup
-CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public
+AS $$
 BEGIN
-  INSERT INTO profiles (id, first_name, email_notifications_enabled)
-  VALUES (NEW.id, SPLIT_PART(NEW.email, '@', 1), true);
+  INSERT INTO public.profiles (
+    id,
+    first_name,
+    last_name,
+    avatar_url,
+    email_notifications_enabled
+  )
+  VALUES (
+    NEW.id,
+    COALESCE(
+      NEW.raw_user_meta_data->>'given_name',
+      NEW.raw_user_meta_data->>'first_name',
+      SPLIT_PART(NEW.email, '@', 1),
+      'User'
+    ),
+    COALESCE(
+      NEW.raw_user_meta_data->>'family_name',
+      NEW.raw_user_meta_data->>'last_name',
+      ''
+    ),
+    COALESCE(
+      NEW.raw_user_meta_data->>'avatar_url',
+      NEW.raw_user_meta_data->>'picture',
+      NULL
+    ),
+    true
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    avatar_url = COALESCE(EXCLUDED.avatar_url, profiles.avatar_url),
+    first_name = COALESCE(profiles.first_name, EXCLUDED.first_name);
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+  AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- Streak calculation
 CREATE OR REPLACE FUNCTION calculate_streak(p_user_id UUID)

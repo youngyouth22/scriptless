@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:scriptless/common/resources/app_colors.dart';
 import 'package:scriptless/common/resources/app_typography.dart';
+import 'package:scriptless/common/widgets/custom_circular_loading_indicator.dart';
 
 /// Un bouton principal réutilisable avec un style cohérent.
 ///
@@ -8,6 +9,8 @@ import 'package:scriptless/common/resources/app_typography.dart';
 /// [onPressed] L'action à exécuter au clic. Si null, le bouton sera désactivé.
 /// [isLoading] Si true, affiche un indicateur de chargement à la place du texte
 /// [icon] Une icône optionnelle à afficher à côté du texte.
+/// [iconAlignment] Icon alignment
+
 class PrimaryButton extends StatelessWidget {
   /// default constructor
   const PrimaryButton({
@@ -22,6 +25,8 @@ class PrimaryButton extends StatelessWidget {
     this.height = 48,
     this.width = double.infinity,
     this.textStyle,
+    this.iconAlignment,
+    this.side,
   });
 
   /// The text to display on the button.
@@ -54,35 +59,52 @@ class PrimaryButton extends StatelessWidget {
   /// The text style of the button.
   final TextStyle? textStyle;
 
+  /// The border side of the button.
+  final BorderSide? side;
+  
+  /// Icon alignment  
+  final IconAlignment? iconAlignment;
+
   @override
   Widget build(BuildContext context) {
+    final effectiveBackgroundColor = backgroundColor ?? AppColors.purpleHard;
+    final effectiveTextColor = textColor ?? AppColors.white;
+    final isDisabled = onPressed == null && !isLoading;
+
+ 
     return SizedBox(
       width: width,
       height: height,
-      child: ElevatedButton(
+      child: ElevatedButton.icon(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor ?? AppColors.purpleHard,
-          foregroundColor: textColor ?? AppColors.white,
+          backgroundColor: effectiveBackgroundColor,
+          foregroundColor: effectiveTextColor,
+          disabledBackgroundColor: effectiveBackgroundColor.withValues(
+            alpha: 0.4,
+          ),
+          disabledForegroundColor: effectiveTextColor.withValues(alpha: 0.6),
+          side: side,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(borderRadius),
           ),
           elevation: 0,
         ),
-        child: isLoading
-            ? const SizedBox(
-                height: 24,
-                width: 24,
-                child: CircularProgressIndicator(
-                  color: AppColors.white,
-                  strokeWidth: 2,
-                ),
-              )
-            : Text(
+        icon: isLoading ? const CustomCircularLoadingIndicator(
+                color: AppColors.purpleHard,
+                size: 24,
+                strokeWidth: 3,
+              ) :  icon,
+        iconAlignment: iconAlignment,
+        label: Text(
                 text,
                 style:
                     textStyle ??
-                    AppTypography.bodyLBold.copyWith(color: AppColors.white),
+                    AppTypography.bodyLMedium.copyWith(
+                      color: isDisabled && isLoading
+                          ? effectiveTextColor.withValues(alpha: 0.6)
+                          : effectiveTextColor,
+                    ),
               ),
       ),
     );

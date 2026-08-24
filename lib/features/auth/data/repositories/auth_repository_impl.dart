@@ -127,4 +127,138 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Stream<AppUser?> get authStateChanges =>
       _remoteDataSource.authStateChanges.map((model) => model?.toEntity());
+
+  @override
+  Future<Either<Failure, Unit>> sendPasswordResetOtp({
+    required String email,
+  }) async {
+    try {
+      await _remoteDataSource.sendPasswordResetOtp(email: email);
+      return const Right(unit);
+    } on AuthExceptionWrapper catch (e) {
+      log(
+        'AuthRepositoryImpl.sendPasswordResetOtp: ${e.message}',
+        name: 'auth',
+      );
+      return Left(AuthFailure(e.message));
+    } on Exception catch (e) {
+      log(
+        'AuthRepositoryImpl.sendPasswordResetOtp unexpected: $e',
+        name: 'auth',
+      );
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> verifyPasswordResetOtp({
+    required String email,
+    required String token,
+  }) async {
+    try {
+      await _remoteDataSource.verifyPasswordResetOtp(
+        email: email,
+        token: token,
+      );
+      return const Right(unit);
+    } on AuthExceptionWrapper catch (e) {
+      log(
+        'AuthRepositoryImpl.verifyPasswordResetOtp: ${e.message}',
+        name: 'auth',
+      );
+      return Left(AuthFailure(e.message));
+    } on Exception catch (e) {
+      log(
+        'AuthRepositoryImpl.verifyPasswordResetOtp unexpected: $e',
+        name: 'auth',
+      );
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> updatePassword({
+    required String newPassword,
+  }) async {
+    try {
+      await _remoteDataSource.updatePassword(newPassword: newPassword);
+      return const Right(unit);
+    } on AuthExceptionWrapper catch (e) {
+      log('AuthRepositoryImpl.updatePassword: ${e.message}', name: 'auth');
+      return Left(AuthFailure(e.message));
+    } on Exception catch (e) {
+      log('AuthRepositoryImpl.updatePassword unexpected: $e', name: 'auth');
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> resendPasswordResetOtp({
+    required String email,
+  }) async {
+    try {
+      await _remoteDataSource.resendPasswordResetOtp(email: email);
+      return const Right(unit);
+    } on AuthExceptionWrapper catch (e) {
+      log(
+        'AuthRepositoryImpl.resendPasswordResetOtp: ${e.message}',
+        name: 'auth',
+      );
+      return Left(AuthFailure(e.message));
+    } on Exception catch (e) {
+      log(
+        'AuthRepositoryImpl.resendPasswordResetOtp unexpected: $e',
+        name: 'auth',
+      );
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> verifySignUpOtp({
+    required String email,
+    required String token,
+  }) async {
+    try {
+      await _remoteDataSource.verifySignUpOtp(
+        email: email,
+        token: token,
+      );
+      return const Right(unit);
+    } on AuthExceptionWrapper catch (e) {
+      log(
+        'AuthRepositoryImpl.verifySignUpOtp: ${e.message}',
+        name: 'auth',
+      );
+      return Left(AuthFailure(e.message));
+    } on Exception catch (e) {
+      log(
+        'AuthRepositoryImpl.verifySignUpOtp unexpected: $e',
+        name: 'auth',
+      );
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> resendSignUpOtp({
+    required String email,
+  }) async {
+    try {
+      await _remoteDataSource.resendSignUpOtp(email: email);
+      return const Right(unit);
+    } on AuthExceptionWrapper catch (e) {
+      log(
+        'AuthRepositoryImpl.resendSignUpOtp: ${e.message}',
+        name: 'auth',
+      );
+      return Left(AuthFailure(e.message));
+    } on Exception catch (e) {
+      log(
+        'AuthRepositoryImpl.resendSignUpOtp unexpected: $e',
+        name: 'auth',
+      );
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

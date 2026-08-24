@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:scriptless/app.dart';
 import 'package:scriptless/di/injection_container.dart';
 import 'package:scriptless/features/app/presentation/bloc/app_bloc.dart';
@@ -9,8 +10,7 @@ import 'package:scriptless/features/subscription/presentation/bloc/subscription_
 import 'package:scriptless/flavors.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-///
-// Provided by flutter_flavorizr via --dart-define=appFlavor=<flavor>
+/// Flavor string passed at compile time via `--dart-define=appFlavor=<flavor>`
 const String appFlavor = String.fromEnvironment('appFlavor');
 
 void main() async {
@@ -33,6 +33,17 @@ void main() async {
 
   // Register all dependencies (must run after Supabase.initialize)
   await configureDependencies();
+
+  // Initialize Google Sign-In with Web Client ID (for Android Credential Mgr)
+  final googleServerClientId =
+      dotenv.env['GOOGLE_WEB_CLIENT_ID'] ??
+      dotenv.env['GOOGLE_SERVER_CLIENT_ID'] ??
+      const String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
+  if (googleServerClientId.isNotEmpty) {
+    await GoogleSignIn.instance.initialize(
+      serverClientId: googleServerClientId,
+    );
+  }
 
   // Initialize RevenueCat SDK
   final revenueCatApiKey = dotenv.env['REVENUECAT_API_KEY'];

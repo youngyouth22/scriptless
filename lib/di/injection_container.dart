@@ -1,18 +1,30 @@
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
+import 'package:powersync/powersync.dart';
+import 'package:scriptless/core/powersync/powersync.dart';
+import 'package:scriptless/core/powersync/supabase_connector.dart';
 import 'package:scriptless/core/router/app_router.dart';
 import 'package:scriptless/features/app/presentation/bloc/app_bloc.dart';
 import 'package:scriptless/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:scriptless/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:scriptless/features/auth/domain/repositories/auth_repository.dart';
 import 'package:scriptless/features/auth/domain/usecases/get_current_user_usecase.dart';
+import 'package:scriptless/features/auth/domain/usecases/resend_password_reset_otp_usecase.dart';
+import 'package:scriptless/features/auth/domain/usecases/resend_sign_up_otp_usecase.dart';
+import 'package:scriptless/features/auth/domain/usecases/send_password_reset_otp_usecase.dart';
 import 'package:scriptless/features/auth/domain/usecases/sign_in_with_email_usecase.dart';
 import 'package:scriptless/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
 import 'package:scriptless/features/auth/domain/usecases/sign_in_with_linkedin_usecase.dart';
 import 'package:scriptless/features/auth/domain/usecases/sign_in_with_twitter_usecase.dart';
 import 'package:scriptless/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:scriptless/features/auth/domain/usecases/sign_up_with_email_usecase.dart';
+import 'package:scriptless/features/auth/domain/usecases/update_password_usecase.dart';
+import 'package:scriptless/features/auth/domain/usecases/verify_password_reset_otp_usecase.dart';
+import 'package:scriptless/features/auth/domain/usecases/verify_sign_up_otp_usecase.dart';
 import 'package:scriptless/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:scriptless/features/auth/presentation/bloc/otp_bloc.dart';
+
+
 import 'package:scriptless/features/onboarding/data/datasources/onboarding_local_datasource.dart';
 import 'package:scriptless/features/onboarding/data/datasources/onboarding_remote_datasource.dart';
 import 'package:scriptless/features/onboarding/data/repositories/onboarding_repository_impl.dart';
@@ -23,6 +35,20 @@ import 'package:scriptless/features/onboarding/domain/usecases/complete_onboardi
 import 'package:scriptless/features/onboarding/domain/usecases/has_seen_onboarding_usecase.dart';
 import 'package:scriptless/features/onboarding/domain/usecases/mark_onboarding_seen_usecase.dart';
 import 'package:scriptless/features/onboarding/presentation/cubit/onboarding_cubit.dart';
+import 'package:scriptless/features/permissions/data/datasources/permission_local_datasource.dart';
+import 'package:scriptless/features/permissions/data/repositories/permission_repository_impl.dart';
+import 'package:scriptless/features/permissions/domain/repositories/permission_repository.dart';
+import 'package:scriptless/features/permissions/domain/usecases/check_permission_usecase.dart';
+import 'package:scriptless/features/permissions/domain/usecases/open_app_settings_usecase.dart';
+import 'package:scriptless/features/permissions/domain/usecases/request_permission_usecase.dart';
+import 'package:scriptless/features/permissions/presentation/cubit/microphone_priming_cubit.dart';
+import 'package:scriptless/features/permissions/presentation/cubit/notifications_priming_cubit.dart';
+import 'package:scriptless/features/persona/data/datasources/persona_remote_datasource.dart';
+import 'package:scriptless/features/persona/data/repositories/persona_repository_impl.dart';
+import 'package:scriptless/features/persona/domain/repositories/persona_repository.dart';
+import 'package:scriptless/features/persona/domain/usecases/get_persona_profile_usecase.dart';
+import 'package:scriptless/features/persona/domain/usecases/save_persona_profile_usecase.dart';
+import 'package:scriptless/features/persona/presentation/cubit/persona_cubit.dart';
 import 'package:scriptless/features/splash/data/datasources/splash_remote_datasource.dart';
 import 'package:scriptless/features/splash/data/repositories/splash_repository_impl.dart';
 import 'package:scriptless/features/splash/domain/repositories/splash_repository.dart';
@@ -69,6 +95,21 @@ Future<void> _registerExternal() async {
   // Supabase client — already initialized in main.dart before this runs.
   sl.registerLazySingleton<SupabaseClient>(() => Supabase.instance.client);
 
+  // PowerSync connector and database service
+  sl
+    ..registerLazySingleton<SupabaseConnector>(
+      () => SupabaseConnector(supabaseClient: sl<SupabaseClient>()),
+    )
+    ..registerLazySingleton<PowerSyncService>(
+      () => PowerSyncService(
+        supabaseClient: sl<SupabaseClient>(),
+        connector: sl<SupabaseConnector>(),
+      ),
+    )
+    ..registerLazySingleton<PowerSyncDatabase>(
+      () => sl<PowerSyncService>().db,
+    );
+
   // SharedPreferences — must be awaited before registering datasources.
   final prefs = await SharedPreferences.getInstance();
   sl.registerSingleton<SharedPreferences>(prefs);
@@ -81,19 +122,31 @@ Future<void> _registerExternal() async {
 void _registerDataSources() {
   sl
     ..registerLazySingleton<AuthRemoteDataSource>(
-      () => AuthRemoteDataSourceImpl(sl<SupabaseClient>()),
+      () => AuthRemoteDataSourceImpl(
+        sl<SupabaseClient>(),
+        powerSyncService: sl<PowerSyncService>(),
+      ),
     )
     ..registerLazySingleton<RevenueCatRemoteDataSource>(
       RevenueCatRemoteDataSourceImpl.new,
     )
     ..registerLazySingleton<SplashRemoteDataSource>(
-      () => SplashRemoteDataSourceImpl(sl<SupabaseClient>()),
+      () => SplashRemoteDataSourceImpl(
+        sl<SupabaseClient>(),
+        sl<PowerSyncService>(),
+      ),
     )
     ..registerLazySingleton<OnboardingRemoteDataSource>(
       () => OnboardingRemoteDataSourceImpl(sl<SupabaseClient>()),
     )
     ..registerLazySingleton<OnboardingLocalDataSource>(
       () => OnboardingLocalDataSourceImpl(sl<SharedPreferences>()),
+    )
+    ..registerLazySingleton<PermissionLocalDataSource>(
+      PermissionLocalDataSourceImpl.new,
+    )
+    ..registerLazySingleton<PersonaRemoteDataSource>(
+      () => PersonaRemoteDataSourceImpl(sl<SupabaseClient>()),
     );
 }
 
@@ -117,6 +170,12 @@ void _registerRepositories() {
     )
     ..registerLazySingleton<OnboardingSeenRepository>(
       () => OnboardingSeenRepositoryImpl(sl<OnboardingLocalDataSource>()),
+    )
+    ..registerLazySingleton<PermissionRepository>(
+      () => PermissionRepositoryImpl(sl<PermissionLocalDataSource>()),
+    )
+    ..registerLazySingleton<PersonaRepository>(
+      () => PersonaRepositoryImpl(sl<PersonaRemoteDataSource>()),
     );
 }
 
@@ -138,6 +197,22 @@ void _registerUseCases() {
     )
     ..registerLazySingleton(() => SignOutUseCase(sl<AuthRepository>()))
     ..registerLazySingleton(() => GetCurrentUserUseCase(sl<AuthRepository>()))
+    ..registerLazySingleton(
+      () => SendPasswordResetOtpUseCase(sl<AuthRepository>()),
+    )
+    ..registerLazySingleton(
+      () => VerifyPasswordResetOtpUseCase(sl<AuthRepository>()),
+    )
+    ..registerLazySingleton(() => UpdatePasswordUseCase(sl<AuthRepository>()))
+    ..registerLazySingleton(
+      () => ResendPasswordResetOtpUseCase(sl<AuthRepository>()),
+    )
+    ..registerLazySingleton(
+      () => VerifySignUpOtpUseCase(sl<AuthRepository>()),
+    )
+    ..registerLazySingleton(
+      () => ResendSignUpOtpUseCase(sl<AuthRepository>()),
+    )
     // Subscription use cases
     ..registerLazySingleton(
       () => CheckProEntitlementUseCase(sl<SubscriptionRepository>()),
@@ -179,6 +254,23 @@ void _registerUseCases() {
     )
     ..registerLazySingleton(
       () => MarkOnboardingSeenUseCase(sl<OnboardingSeenRepository>()),
+    )
+    // Permissions use cases
+    ..registerLazySingleton(
+      () => CheckPermissionUseCase(sl<PermissionRepository>()),
+    )
+    ..registerLazySingleton(
+      () => RequestPermissionUseCase(sl<PermissionRepository>()),
+    )
+    ..registerLazySingleton(
+      () => OpenAppSettingsUseCase(sl<PermissionRepository>()),
+    )
+    // Persona use cases
+    ..registerLazySingleton(
+      () => SavePersonaProfileUseCase(sl<PersonaRepository>()),
+    )
+    ..registerLazySingleton(
+      () => GetPersonaProfileUseCase(sl<PersonaRepository>()),
     );
 }
 
@@ -193,6 +285,7 @@ void _registerBlocs() {
       authRepository: sl<AuthRepository>(),
       getCurrentUser: sl<GetCurrentUserUseCase>(),
       hasSeenOnboarding: sl<HasSeenOnboardingUseCase>(),
+      getPersonaProfile: sl<GetPersonaProfileUseCase>(),
     ),
   );
 
@@ -205,6 +298,18 @@ void _registerBlocs() {
       signInWithTwitter: sl<SignInWithTwitterUseCase>(),
       signInWithLinkedIn: sl<SignInWithLinkedInUseCase>(),
       signOut: sl<SignOutUseCase>(),
+    ),
+  );
+
+  // OtpBloc — factory tied to OTP & password reset flow lifecycle.
+  sl.registerFactory<OtpBloc>(
+    () => OtpBloc(
+      sendPasswordResetOtp: sl<SendPasswordResetOtpUseCase>(),
+      verifyPasswordResetOtp: sl<VerifyPasswordResetOtpUseCase>(),
+      updatePassword: sl<UpdatePasswordUseCase>(),
+      resendPasswordResetOtp: sl<ResendPasswordResetOtpUseCase>(),
+      verifySignUpOtp: sl<VerifySignUpOtpUseCase>(),
+      resendSignUpOtp: sl<ResendSignUpOtpUseCase>(),
     ),
   );
 
@@ -225,6 +330,30 @@ void _registerBlocs() {
     ),
   );
 
+  // Permissions Cubits — factories tied to priming screens.
+  sl.registerFactory<MicrophonePrimingCubit>(
+    () => MicrophonePrimingCubit(
+      checkPermission: sl<CheckPermissionUseCase>(),
+      requestPermission: sl<RequestPermissionUseCase>(),
+      openAppSettings: sl<OpenAppSettingsUseCase>(),
+    ),
+  );
+
+  sl.registerFactory<NotificationsPrimingCubit>(
+    () => NotificationsPrimingCubit(
+      checkPermission: sl<CheckPermissionUseCase>(),
+      requestPermission: sl<RequestPermissionUseCase>(),
+      openAppSettings: sl<OpenAppSettingsUseCase>(),
+    ),
+  );
+
+  // PersonaCubit — factory tied to persona selection wizard.
+  sl.registerFactory<PersonaCubit>(
+    () => PersonaCubit(
+      savePersonaProfile: sl<SavePersonaProfileUseCase>(),
+    ),
+  );
+
   // SubscriptionBloc — singleton because subscription state spans the whole
   // app.
   sl.registerLazySingleton<SubscriptionBloc>(
@@ -240,6 +369,7 @@ void _registerBlocs() {
     ),
   );
 }
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Router

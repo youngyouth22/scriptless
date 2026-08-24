@@ -32,7 +32,7 @@ class SplashCubit extends Cubit<SplashState> {
   /// Starts the splash initialization check sequence.
   Future<void> init() async {
     log('SplashCubit: Starting initialization checks', name: 'splash');
-    emit(const SplashLoading());
+    _safeEmit(const SplashLoading());
 
     // 1. Verify Supabase session
     final authResult = await _getCurrentUser(const NoParams());
@@ -43,12 +43,12 @@ class SplashCubit extends Cubit<SplashState> {
           'SplashCubit: Session check error — ${failure.message}',
           name: 'splash',
         );
-        emit(const SplashNavigateToLogin());
+        _safeEmit(const SplashNavigateToLogin());
       },
       (user) async {
         if (user == null || user.isEmpty) {
           log('SplashCubit: No active session found', name: 'splash');
-          emit(const SplashNavigateToLogin());
+          _safeEmit(const SplashNavigateToLogin());
           return;
         }
 
@@ -63,12 +63,12 @@ class SplashCubit extends Cubit<SplashState> {
               'SplashCubit: Onboarding check failed — ${failure.message}',
               name: 'splash',
             );
-            emit(SplashError(failure));
+            _safeEmit(SplashError(failure));
           },
           (isCompleted) async {
             if (!isCompleted) {
               log('SplashCubit: Onboarding incomplete', name: 'splash');
-              emit(const SplashNavigateToOnboarding());
+              _safeEmit(const SplashNavigateToOnboarding());
               return;
             }
 
@@ -88,19 +88,25 @@ class SplashCubit extends Cubit<SplashState> {
                   'SplashCubit: PowerSync init failed — ${failure.message}',
                   name: 'splash',
                 );
-                emit(SplashError(failure));
+                _safeEmit(SplashError(failure));
               },
               (_) {
                 log(
                   'SplashCubit: PowerSync initialized successfully',
                   name: 'splash',
                 );
-                emit(const SplashNavigateToDashboard());
+                _safeEmit(const SplashNavigateToDashboard());
               },
             );
           },
         );
       },
     );
+  }
+
+  void _safeEmit(SplashState state) {
+    if (!isClosed) {
+      emit(state);
+    }
   }
 }

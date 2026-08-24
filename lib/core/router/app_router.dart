@@ -8,7 +8,11 @@ import 'package:scriptless/features/app/presentation/bloc/app_bloc.dart';
 import 'package:scriptless/features/auth/presentation/pages/auth_email_login_page.dart';
 import 'package:scriptless/features/auth/presentation/pages/auth_register_page.dart';
 import 'package:scriptless/features/auth/presentation/pages/login_page.dart';
+import 'package:scriptless/features/auth/presentation/pages/otp_verification_page.dart';
 import 'package:scriptless/features/onboarding/presentation/pages/onboarding_page.dart';
+import 'package:scriptless/features/permissions/presentation/pages/microphone_priming_page.dart';
+import 'package:scriptless/features/permissions/presentation/pages/notifications_priming_page.dart';
+import 'package:scriptless/features/persona/presentation/pages/persona_page.dart';
 import 'package:scriptless/features/splash/presentation/pages/splash_page.dart';
 
 // ─── Router factory ──────────────────────────────────────────────────────────
@@ -23,7 +27,8 @@ import 'package:scriptless/features/splash/presentation/pages/splash_page.dart';
 /// - [AppLoading]           → always show splash (wait for boot sequence)
 /// - [AppNeedsOnboarding]   → redirect to /onboarding (first launch only)
 /// - [AppUnauthenticated]   → redirect to /auth/login (has seen onboarding)
-/// - [AppAuthenticated]     → redirect away from auth/onboarding/splash routes
+/// - [AppNeedsPersona]       → redirect to /persona (authenticated, profile incomplete)
+/// - [AppAuthenticated]     → redirect away from auth/onboarding/splash/persona routes
 GoRouter createRouter(AppBloc appBloc) {
   return GoRouter(
     initialLocation: AppRoutes.splash,
@@ -41,6 +46,7 @@ GoRouter createRouter(AppBloc appBloc) {
       final isOnSplash = location == AppRoutes.splash;
       final isOnOnboarding = location.startsWith('/onboarding');
       final isOnAuthRoute = location.startsWith('/auth');
+      final isOnPersona = location.startsWith('/persona');
 
       return switch (appState) {
         // ── Boot ──────────────────────────────────────────────────────────
@@ -57,10 +63,14 @@ GoRouter createRouter(AppBloc appBloc) {
         // Allow all /auth/* routes; redirect everything else to login.
         AppUnauthenticated() => isOnAuthRoute ? null : AppRoutes.authLogin,
 
+        // ── Needs Persona setup ───────────────────────────────────────────
+        // User is authenticated but hasn't completed their persona wizard.
+        AppNeedsPersona() => isOnPersona ? null : AppRoutes.persona,
+
         // ── Authenticated ─────────────────────────────────────────────────
-        // User is signed in; block auth/onboarding/splash routes.
+        // User is signed in and persona is configured; block auth/onboarding/splash/persona routes.
         AppAuthenticated() =>
-          (isOnAuthRoute || isOnOnboarding || isOnSplash)
+          (isOnAuthRoute || isOnOnboarding || isOnSplash || isOnPersona)
               ? AppRoutes.dashboard
               : null,
       };
@@ -94,36 +104,51 @@ GoRouter createRouter(AppBloc appBloc) {
         path: AppRoutes.authRegister,
         builder: (context, state) => const AuthRegisterPage(),
       ),
+      GoRoute(
+        name: AppRoutes.authForgotPassword,
+        path: AppRoutes.authForgotPassword,
+        builder: (context, state) {
+          final extra = state.extra;
+          if (extra is OtpPageArgs) {
+            return OtpVerificationPage(
+              initialEmail: extra.email,
+              flowType: extra.flowType,
+            );
+          }
+          final initialEmail = extra is String ? extra : null;
+          return OtpVerificationPage(
+            initialEmail: initialEmail,
+          );
+        },
+      ),
+
       // GoRoute(
       //   path: AppRoutes.authMagicLink,
       //   builder: (context, state) => const MagicLinkPage(),
       // ),
-      // GoRoute(
-      //   path: AppRoutes.authForgotPassword,
-      //   builder: (context, state) => const ForgotPasswordPage(),
-      // ),
       GoRoute(
         path: AppRoutes.authCallback,
+
         // The deep-link callback is handled by Supabase's auth listener;
         // this route simply redirects back to splash so the guard takes over.
         redirect: (context, state) => AppRoutes.splash,
       ),
 
       // ── Permissions ────────────────────────────────────────────────────────
-      // GoRoute(
-      //   path: AppRoutes.permissionsMicrophonePriming,
-      //   builder: (context, state) => const MicrophonePrimingPage(),
-      // ),
-      // GoRoute(
-      //   path: AppRoutes.permissionsNotificationsPriming,
-      //   builder: (context, state) => const NotificationsPrimingPage(),
-      // ),
+      GoRoute(
+        path: AppRoutes.permissionsMicrophonePriming,
+        builder: (context, state) => const MicrophonePrimingPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.permissionsNotificationsPriming,
+        builder: (context, state) => const NotificationsPrimingPage(),
+      ),
 
       // ── Persona ────────────────────────────────────────────────────────────
-      // GoRoute(
-      //   path: AppRoutes.persona,
-      //   builder: (context, state) => const PersonaPage(),
-      // ),
+      GoRoute(
+        path: AppRoutes.persona,
+        builder: (context, state) => const PersonaPage(),
+      ),
 
       // ── Dashboard ──────────────────────────────────────────────────────────
       GoRoute(

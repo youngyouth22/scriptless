@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,6 +14,10 @@ import 'package:scriptless/common/widgets/custom_textfield.dart';
 import 'package:scriptless/common/widgets/primary_button.dart';
 import 'package:scriptless/di/injection_container.dart';
 import 'package:scriptless/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:scriptless/features/auth/presentation/pages/login_page.dart';
+import 'package:scriptless/features/auth/presentation/pages/otp_verification_page.dart';
+import 'package:scriptless/features/auth/presentation/widgets/auth_method_icon_buttons.dart';
+import 'package:scriptless/features/auth/presentation/widgets/or_divider.dart';
 
 /// Registration screen with email & password.
 class AuthRegisterPage extends StatelessWidget {
@@ -118,6 +124,15 @@ class _AuthRegisterViewState extends State<_AuthRegisterView> {
                 ),
               ),
             );
+          unawaited(
+            context.pushNamed(
+              AppRoutes.authForgotPassword,
+              extra: OtpPageArgs(
+                email: _emailController.text.trim(),
+                flowType: OtpFlowType.signUpVerification,
+              ),
+            ),
+          );
         }
       },
       builder: (context, state) {
@@ -128,6 +143,7 @@ class _AuthRegisterViewState extends State<_AuthRegisterView> {
         return Scaffold(
           appBar: AppBar(
             backgroundColor: Colors.transparent,
+            forceMaterialTransparency: true,
             elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: AppColors.grey950),
@@ -140,7 +156,6 @@ class _AuthRegisterViewState extends State<_AuthRegisterView> {
               child: Form(
                 key: _formKey,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Create Account',
@@ -151,6 +166,7 @@ class _AuthRegisterViewState extends State<_AuthRegisterView> {
                     const SizedBox(height: AppSpacing.spacing8),
                     Text(
                       'Sign up with your email and start your journey.',
+                      textAlign: TextAlign.center,
                       style: AppTypography.bodyLRegular.copyWith(
                         color: AppColors.grey500,
                       ),
@@ -212,6 +228,12 @@ class _AuthRegisterViewState extends State<_AuthRegisterView> {
                       isLoading: isLoading,
                       onPressed: isLoading ? null : _submitForm,
                     ),
+                    const SizedBox(height: AppSpacing.spacing12),
+                    const PrivacyRuleWidget(),
+                    const SizedBox(height: AppSpacing.spacing8),
+                    const OrDivider(),
+                    const SizedBox(height: AppSpacing.spacing16),
+                    const AuthMethodIconButtons(),
                     const SizedBox(height: AppSpacing.spacing24),
                     Center(
                       child: RichText(

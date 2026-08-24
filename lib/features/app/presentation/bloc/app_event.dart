@@ -25,3 +25,12 @@ final class AppUserUnauthenticated extends AppEvent {
   /// Default constructor.
   const AppUserUnauthenticated();
 }
+
+/// Fired when the user completes their persona selection/setup.
+final class AppPersonaCompleted extends AppEvent {
+  /// Default constructor.
+  const AppPersonaCompleted(this.user);
+
+  /// The user who completed persona setup.
+  final AppUser user;
+}

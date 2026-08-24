@@ -53,4 +53,31 @@ abstract class AuthRepository {
   ///
   /// Same async pattern as [signInWithGoogle].
   Future<Either<Failure, Unit>> signInWithLinkedIn();
+
+  // ── Password Reset & OTP ──────────────────────────────────────────────────
+
+  /// Sends a password reset OTP code to the provided [email].
+  Future<Either<Failure, Unit>> sendPasswordResetOtp({required String email});
+
+  /// Verifies the OTP [token] sent to [email] for password recovery.
+  Future<Either<Failure, Unit>> verifyPasswordResetOtp({
+    required String email,
+    required String token,
+  });
+
+  /// Updates the user's password to [newPassword].
+  Future<Either<Failure, Unit>> updatePassword({required String newPassword});
+
+  /// Resends the password reset OTP code to [email].
+  Future<Either<Failure, Unit>> resendPasswordResetOtp({required String email});
+
+  /// Verifies the OTP [token] sent to [email] for account registration
+  /// confirmation.
+  Future<Either<Failure, Unit>> verifySignUpOtp({
+    required String email,
+    required String token,
+  });
+
+  /// Resends the sign-up verification OTP code to [email].
+  Future<Either<Failure, Unit>> resendSignUpOtp({required String email});
 }

@@ -173,6 +173,28 @@ void main() {
 
       expect(find.text('Google authentication cancelled'), findsOneWidget);
     });
+
+    testWidgets(
+      'dispatches AuthResetRequested when app resumes during OAuth in progress',
+      (tester) async {
+        setTestViewport(tester);
+        whenListen(
+          mockAuthBloc,
+          const Stream<AuthState>.empty(),
+          initialState: const AuthOAuthInProgress(),
+        );
+
+        await tester.pumpWidget(createWidgetUnderTest(const LoginPage()));
+        await tester.pump();
+
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        await tester.pump();
+
+        verify(() => mockAuthBloc.add(const AuthResetRequested())).called(1);
+      },
+    );
   });
 
   group('AuthRegisterPage Widget Tests', () {

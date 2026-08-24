@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/gestures.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -138,7 +141,6 @@ class _AuthEmailLoginViewState extends State<_AuthEmailLoginView> {
               child: Form(
                 key: _formKey,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Welcome Back',
@@ -149,6 +151,7 @@ class _AuthEmailLoginViewState extends State<_AuthEmailLoginView> {
                     const SizedBox(height: AppSpacing.spacing8),
                     Text(
                       'Sign in with your email and password to continue.',
+                      textAlign: TextAlign.center,
                       style: AppTypography.bodyLRegular.copyWith(
                         color: AppColors.grey500,
                       ),
@@ -184,6 +187,29 @@ class _AuthEmailLoginViewState extends State<_AuthEmailLoginView> {
                         return null;
                       },
                     ),
+                    // const SizedBox(height: AppSpacing.spacing8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {
+                          unawaited(
+                            context.pushNamed(
+                              AppRoutes.authForgotPassword,
+                              extra: _emailController.text.trim(),
+                            ),
+                          );
+                        },
+                        child: Text(
+                          'Forgot password?',
+                          style: AppTypography.bodyMMedium.copyWith(
+                            color: AppColors.red,
+                          ),
+                        ),
+                      ),
+                    ),
+
+
+
                     const SizedBox(height: AppSpacing.spacing32),
                     PrimaryButton(
                       text: 'Log In',

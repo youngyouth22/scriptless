@@ -109,3 +109,17 @@ final class AuthSignOutRequested extends AuthEvent {
   @override
   int get hashCode => runtimeType.hashCode;
 }
+
+/// Resets the auth state back to [AuthInitial].
+@immutable
+final class AuthResetRequested extends AuthEvent {
+  /// Default constructor.
+  const AuthResetRequested();
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is AuthResetRequested;
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+}

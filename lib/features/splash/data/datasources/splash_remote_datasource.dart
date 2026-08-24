@@ -1,4 +1,5 @@
 import 'package:scriptless/core/error/exceptions.dart';
+import 'package:scriptless/core/powersync/powersync.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Contract for the remote splash datasource.
@@ -13,9 +14,13 @@ abstract class SplashRemoteDataSource {
 /// Supabase implementation of [SplashRemoteDataSource].
 class SplashRemoteDataSourceImpl implements SplashRemoteDataSource {
   /// Creates a [SplashRemoteDataSourceImpl].
-  const SplashRemoteDataSourceImpl(this._supabaseClient);
+  const SplashRemoteDataSourceImpl(
+    this._supabaseClient,
+    this._powerSyncService,
+  );
 
   final SupabaseClient _supabaseClient;
+  final PowerSyncService _powerSyncService;
 
   @override
   Future<bool> isOnboardingCompleted(String userId) async {
@@ -48,8 +53,7 @@ class SplashRemoteDataSourceImpl implements SplashRemoteDataSource {
   @override
   Future<void> initializePowerSync() async {
     try {
-      // TODO: Add PowerSync initialization logic or ready check.
-      return;
+      await _powerSyncService.initialize();
     } on Exception catch (e) {
       throw ServerException(message: e.toString());
     }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:scriptless/common/resources/app_colors.dart';
 import 'package:scriptless/common/resources/app_typography.dart';
@@ -10,6 +11,17 @@ abstract class AppThemes {
     useMaterial3: true,
     textTheme: GoogleFonts.interTextTheme(),
     dividerTheme: const DividerThemeData(color: Colors.transparent),
+    appBarTheme: const AppBarTheme(
+      leadingWidth: 100,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      systemOverlayStyle: SystemUiOverlayStyle(
+        systemNavigationBarContrastEnforced: false,
+        systemNavigationBarIconBrightness: Brightness.dark,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.dark,
+      ),
+    ),
     navigationBarTheme: const NavigationBarThemeData(
       elevation: 0,
       backgroundColor: Colors.transparent,

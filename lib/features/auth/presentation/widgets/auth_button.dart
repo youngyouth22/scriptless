@@ -35,6 +35,8 @@ class AuthButton extends StatelessWidget {
         icon: isLoading
             ? const CustomCircularLoadingIndicator(
                 color: AppColors.purpleHard,
+                size: 24,
+                strokeWidth: 3,
               )
             : icon,
         onPressed: isLoading ? null : onPressed,

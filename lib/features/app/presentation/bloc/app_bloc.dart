@@ -11,6 +11,7 @@ import 'package:scriptless/features/auth/domain/entities/app_user.dart';
 import 'package:scriptless/features/auth/domain/repositories/auth_repository.dart';
 import 'package:scriptless/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:scriptless/features/onboarding/domain/usecases/has_seen_onboarding_usecase.dart';
+import 'package:scriptless/features/persona/domain/usecases/get_persona_profile_usecase.dart';
 
 part 'app_event.dart';
 part 'app_state.dart';
@@ -19,25 +20,30 @@ part 'app_state.dart';
 ///
 /// Subscribes to [AuthRepository.authStateChanges] to react to session
 /// changes and guards protected routes via go_router redirects.
-/// Lifecycle: [AppLoading] → [AppAuthenticated] | [AppUnauthenticated].
+/// Lifecycle: [AppLoading] → [AppNeedsOnboarding] | [AppUnauthenticated]
+/// | [AppNeedsPersona] | [AppAuthenticated].
 class AppBloc extends Bloc<AppEvent, AppState> {
   /// Creates an [AppBloc].
   AppBloc({
     required AuthRepository authRepository,
     required GetCurrentUserUseCase getCurrentUser,
     required HasSeenOnboardingUseCase hasSeenOnboarding,
+    required GetPersonaProfileUseCase getPersonaProfile,
   }) : _authRepository = authRepository,
        _getCurrentUser = getCurrentUser,
        _hasSeenOnboarding = hasSeenOnboarding,
+       _getPersonaProfile = getPersonaProfile,
        super(const AppLoading()) {
     on<AppStarted>(_onAppStarted);
     on<AppUserAuthenticated>(_onUserAuthenticated);
     on<AppUserUnauthenticated>(_onUserUnauthenticated);
+    on<AppPersonaCompleted>(_onPersonaCompleted);
   }
 
   final AuthRepository _authRepository;
   final GetCurrentUserUseCase _getCurrentUser;
   final HasSeenOnboardingUseCase _hasSeenOnboarding;
+  final GetPersonaProfileUseCase _getPersonaProfile;
 
   StreamSubscription<AppUser?>? _authSubscription;
 
@@ -77,7 +83,7 @@ class AppBloc extends Bloc<AppEvent, AppState> {
       (user) async {
         if (user != null && user.isNotEmpty) {
           log('AppBloc: session found — user ${user.id}', name: 'app');
-          emit(AppAuthenticated(user));
+          await _emitAuthenticatedOrPersona(emit, user);
         } else {
           log('AppBloc: no active session', name: 'app');
           await _emitUnauthenticatedOrOnboarding(emit);
@@ -120,12 +126,43 @@ class AppBloc extends Bloc<AppEvent, AppState> {
     );
   }
 
-  void _onUserAuthenticated(
+  /// Checks if the authenticated [user] has completed their persona profile.
+  /// Emits [AppAuthenticated] if complete, or [AppNeedsPersona] otherwise.
+  Future<void> _emitAuthenticatedOrPersona(
+    Emitter<AppState> emit,
+    AppUser user,
+  ) async {
+    final personaResult = await _getPersonaProfile(user.id);
+    personaResult.fold(
+      (failure) {
+        log(
+          'AppBloc: getPersonaProfile failed — ${failure.message}; '
+          'defaulting to AppNeedsPersona',
+          name: 'app',
+        );
+        emit(AppNeedsPersona(user));
+      },
+      (profile) {
+        if (profile != null) {
+          log('AppBloc: persona profile found — AppAuthenticated', name: 'app');
+          emit(AppAuthenticated(user));
+        } else {
+          log(
+            'AppBloc: persona profile missing — AppNeedsPersona',
+            name: 'app',
+          );
+          emit(AppNeedsPersona(user));
+        }
+      },
+    );
+  }
+
+  Future<void> _onUserAuthenticated(
     AppUserAuthenticated event,
     Emitter<AppState> emit,
-  ) {
+  ) async {
     log('AppBloc: user authenticated — ${event.user.id}', name: 'app');
-    emit(AppAuthenticated(event.user));
+    await _emitAuthenticatedOrPersona(emit, event.user);
   }
 
   void _onUserUnauthenticated(
@@ -134,6 +171,14 @@ class AppBloc extends Bloc<AppEvent, AppState> {
   ) {
     log('AppBloc: user unauthenticated', name: 'app');
     emit(const AppUnauthenticated());
+  }
+
+  void _onPersonaCompleted(
+    AppPersonaCompleted event,
+    Emitter<AppState> emit,
+  ) {
+    log('AppBloc: persona completed — ${event.user.id}', name: 'app');
+    emit(AppAuthenticated(event.user));
   }
 
   @override

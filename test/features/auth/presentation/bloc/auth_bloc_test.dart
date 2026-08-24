@@ -280,5 +280,15 @@ void main() {
         ],
       );
     });
+
+    group('AuthResetRequested', () {
+      blocTest<AuthBloc, AuthState>(
+        'emits [AuthInitial] when reset is requested',
+        build: buildBloc,
+        seed: () => const AuthOAuthInProgress(),
+        act: (bloc) => bloc.add(const AuthResetRequested()),
+        expect: () => const [AuthInitial()],
+      );
+    });
   });
 }

@@ -47,6 +47,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthTwitterSignInRequested>(_onTwitterSignInRequested);
     on<AuthLinkedInSignInRequested>(_onLinkedInSignInRequested);
     on<AuthSignOutRequested>(_onSignOutRequested);
+    on<AuthResetRequested>(_onResetRequested);
+  }
+
+  void _onResetRequested(
+    AuthResetRequested event,
+    Emitter<AuthState> emit,
+  ) {
+    emit(const AuthInitial());
   }
 
   final SignInWithEmailUseCase _signInWithEmail;

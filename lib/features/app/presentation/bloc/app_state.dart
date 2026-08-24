@@ -22,6 +22,28 @@ final class AppNeedsOnboarding extends AppState {
   const AppNeedsOnboarding();
 }
 
+/// A user is authenticated but has not yet completed their persona setup.
+///
+/// The router guard redirects to `/persona` in this state.
+@immutable
+final class AppNeedsPersona extends AppState {
+  /// Default constructor.
+  const AppNeedsPersona(this.user);
+
+  /// The currently authenticated user needing persona setup.
+  final AppUser user;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AppNeedsPersona &&
+          runtimeType == other.runtimeType &&
+          user == other.user;
+
+  @override
+  int get hashCode => user.hashCode;
+}
+
 /// A user is authenticated and the app is ready.
 @immutable
 final class AppAuthenticated extends AppState {

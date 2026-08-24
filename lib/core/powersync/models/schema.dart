@@ -1,5 +1,6 @@
 import 'package:powersync/powersync.dart';
 
+/// PowerSync client-side SQLite database schema for Scriptless.
 const schema = Schema([
   // ═════════════════════════════════════════════════════════════════════════
   // GLOBAL

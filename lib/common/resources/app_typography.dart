@@ -1,3 +1,4 @@
+// Self-explanatory typography style tokens.
 // ignore_for_file: public_member_api_docs
 
 import 'package:flutter/material.dart';
@@ -61,17 +62,17 @@ abstract class AppTypography {
   static TextStyle headingH4SemiBold = GoogleFonts.inter(
     fontSize: 28,
     fontWeight: FontWeight.w600,
-    height: 36,
+    // height: 36,
   );
   static TextStyle headingH4Medium = GoogleFonts.inter(
     fontSize: 28,
     fontWeight: FontWeight.w500,
-    height: 36,
+    // height: 36,
   );
   static TextStyle headingH4Regular = GoogleFonts.inter(
     fontSize: 28,
     fontWeight: FontWeight.w400,
-    height: 36,
+    // height: 36,
   );
   static TextStyle h4Bold = GoogleFonts.inter(
     fontSize: 24,
@@ -116,52 +117,52 @@ abstract class AppTypography {
   static TextStyle h6Bold = GoogleFonts.inter(
     fontSize: 18,
     fontWeight: FontWeight.w700,
-    height: 26,
+    // height: 26,
   );
   static TextStyle h6SemiBold = GoogleFonts.inter(
     fontSize: 18,
     fontWeight: FontWeight.w600,
-    height: 26,
+    // height: 26,
   );
   static TextStyle h6Medium = GoogleFonts.inter(
     fontSize: 18,
     fontWeight: FontWeight.w500,
-    height: 26,
+    // height: 26,
   );
   static TextStyle h6Regular = GoogleFonts.inter(
     fontSize: 18,
     fontWeight: FontWeight.w400,
-    height: 26,
+    // height: 26,
   );
   static TextStyle bodyXlBold = GoogleFonts.inter(
     fontSize: 18,
     fontWeight: FontWeight.w700,
-    height: 26,
+    // height: 26,
   );
   static TextStyle bodyXlSemiBold = GoogleFonts.inter(
     fontSize: 18,
     fontWeight: FontWeight.w600,
-    height: 26,
+    // height: 26,
   );
   static TextStyle bodyXlMedium = GoogleFonts.inter(
     fontSize: 18,
     fontWeight: FontWeight.w500,
-    height: 26,
+    // height: 26,
   );
   static TextStyle bodyXlRegular = GoogleFonts.inter(
     fontSize: 18,
     fontWeight: FontWeight.w400,
-    height: 26,
+    // height: 26,
   );
   static TextStyle bodyLBold = GoogleFonts.inter(
     fontSize: 16,
     fontWeight: FontWeight.w700,
-    height: 24,
+    // height: 24,
   );
   static TextStyle bodyLSemiBold = GoogleFonts.inter(
     fontSize: 16,
     fontWeight: FontWeight.w600,
-    height: 24,
+    // height: 24,
   );
   static TextStyle bodyLMedium = GoogleFonts.inter(
     fontSize: 16,
