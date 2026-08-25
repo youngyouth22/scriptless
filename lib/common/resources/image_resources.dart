@@ -12,8 +12,8 @@ class ImageResources {
   static const String eyeCloseIcon = 'assets/logo/griddy-icons_eye-off.svg';
   static const String arrowRight = 'assets/logo/Right_Arrow.svg';
   static const String arrowLeft = 'assets/logo/arrow_left_ios.svg';
-  static const String homeIcon = 'assets/logo/home-04-1.svg';
-  static const String homeIconBold = 'assets/logo/home-04.svg';
+  static const String homeIcon = 'assets/logo/home-04.svg';
+  static const String homeIconBold = 'assets/logo/home-filled.svg';
   static const String libraryIcon = 'assets/logo/note.svg';
   static const String libraryIconBold = 'assets/logo/note-1.svg';
   static const String historyIcon = 'assets/logo/fluent_chat-history-24-regular.svg';
