@@ -77,42 +77,42 @@ abstract class AppTypography {
   static TextStyle h4Bold = GoogleFonts.inter(
     fontSize: 24,
     fontWeight: FontWeight.w700,
-    height: 32,
+    // height: 32,
   );
   static TextStyle h4SemiBold = GoogleFonts.inter(
     fontSize: 24,
     fontWeight: FontWeight.w600,
-    height: 32,
+    // height: 32,
   );
   static TextStyle h4Medium = GoogleFonts.inter(
     fontSize: 24,
     fontWeight: FontWeight.w500,
-    height: 32,
+    // height: 32,
   );
   static TextStyle h4Regular = GoogleFonts.inter(
     fontSize: 24,
     fontWeight: FontWeight.w400,
-    height: 32,
+    // height: 32,
   );
   static TextStyle h5Bold = GoogleFonts.inter(
     fontSize: 20,
     fontWeight: FontWeight.w700,
-    height: 28,
+    // height: 28,
   );
   static TextStyle h5SemiBold = GoogleFonts.inter(
     fontSize: 20,
     fontWeight: FontWeight.w600,
-    height: 28,
+    // height: 28,
   );
   static TextStyle h5Medium = GoogleFonts.inter(
     fontSize: 20,
     fontWeight: FontWeight.w500,
-    height: 28,
+    // height: 28,
   );
   static TextStyle h5Regular = GoogleFonts.inter(
     fontSize: 20,
     fontWeight: FontWeight.w400,
-    height: 28,
+    // height: 28,
   );
   static TextStyle h6Bold = GoogleFonts.inter(
     fontSize: 18,
@@ -202,7 +202,7 @@ abstract class AppTypography {
   static TextStyle bodySSemiBold = GoogleFonts.inter(
     fontSize: 12,
     fontWeight: FontWeight.w600,
-    height: 16,
+    // height: 16,
   );
   static TextStyle bodySMedium = GoogleFonts.inter(
     fontSize: 12,
@@ -212,7 +212,7 @@ abstract class AppTypography {
   static TextStyle bodySRegular = GoogleFonts.inter(
     fontSize: 12,
     fontWeight: FontWeight.w400,
-    height: 16,
+    // height: 16,
   );
   static TextStyle bodyXsBold = GoogleFonts.inter(
     fontSize: 10,

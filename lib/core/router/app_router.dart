@@ -9,10 +9,15 @@ import 'package:scriptless/features/auth/presentation/pages/auth_email_login_pag
 import 'package:scriptless/features/auth/presentation/pages/auth_register_page.dart';
 import 'package:scriptless/features/auth/presentation/pages/login_page.dart';
 import 'package:scriptless/features/auth/presentation/pages/otp_verification_page.dart';
+import 'package:scriptless/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:scriptless/features/dashboard/presentation/pages/dashboard_shell_page.dart';
+import 'package:scriptless/features/history/presentation/pages/history_page.dart';
+import 'package:scriptless/features/library/presentation/pages/library_page.dart';
 import 'package:scriptless/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:scriptless/features/permissions/presentation/pages/microphone_priming_page.dart';
 import 'package:scriptless/features/permissions/presentation/pages/notifications_priming_page.dart';
 import 'package:scriptless/features/persona/presentation/pages/persona_page.dart';
+import 'package:scriptless/features/profile/presentation/pages/profile_page.dart';
 import 'package:scriptless/features/splash/presentation/pages/splash_page.dart';
 
 // ─── Router factory ──────────────────────────────────────────────────────────
@@ -150,10 +155,52 @@ GoRouter createRouter(AppBloc appBloc) {
         builder: (context, state) => const PersonaPage(),
       ),
 
-      // ── Dashboard ──────────────────────────────────────────────────────────
-      GoRoute(
-        path: AppRoutes.dashboard,
-        builder: (context, state) => const OnboardingPage(),
+      // ── Main Shell (Dashboard / Library / History / Profile) ───────────
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return DashboardShellPage(navigationShell: navigationShell);
+        },
+        branches: [
+          // Tab 0: Accueil / Dashboard
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.dashboard,
+                builder: (context, state) => const DashboardPage(),
+              ),
+            ],
+          ),
+
+          // Tab 1: Scénarios / Library
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.library,
+                builder: (context, state) => const LibraryPage(),
+              ),
+            ],
+          ),
+
+          // Tab 2: Historique / History
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.history,
+                builder: (context, state) => const HistoryPage(),
+              ),
+            ],
+          ),
+
+          // Tab 3: Profil / Profile
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.profile,
+                builder: (context, state) => const ProfilePage(),
+              ),
+            ],
+          ),
+        ],
       ),
 
       // ── Library ────────────────────────────────────────────────────────────
