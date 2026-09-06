@@ -27,7 +27,7 @@ dependencies:
   path_provider: ^2.1.5
   permission_handler: ^13.0.1
   pinput: ^6.0.2
-  powersync: ^2.3.3
+  powersync: ^2.4.0
   purchases_flutter: ^10.9.1
   purchases_ui_flutter: ^10.9.1
   shared_preferences: ^2.3.2
