@@ -7,7 +7,7 @@ environment:
   sdk: ^3.12.1
 
 dependencies:
-  app_links: ^7.2.1
+  app_links: ^7.2.2
   dartz: ^0.10.1
   flutter:
     sdk: flutter
